@@ -1,0 +1,6 @@
+{
+  "name": "Mental Math",
+  "description": "Минималистичный тренажёр устного счёта на скорость: 3 уровня сложности, мгновенная проверка и статистика сессий.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

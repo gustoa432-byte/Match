@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #080b16;
+    color: #ffffff;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Космический градиентный фон с туманностями и свечением */
+.cosmic-bg {
+  background-color: #080a15;
+  background-image: 
+    radial-gradient(circle at 85% 12%, rgba(6, 182, 212, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 15% 18%, rgba(217, 70, 239, 0.15) 0%, transparent 42%),
+    radial-gradient(circle at 50% 60%, rgba(37, 99, 235, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 20% 90%, rgba(139, 92, 246, 0.12) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+
+/* Звездная космическая пыль */
+.stars-overlay {
+  background-image: radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+                    radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.7), rgba(0,0,0,0)),
+                    radial-gradient(1.5px 1.5px at 90px 40px, rgba(255,255,255,0.9), rgba(0,0,0,0)),
+                    radial-gradient(1px 1px at 160px 120px, rgba(255,255,255,0.5), rgba(0,0,0,0)),
+                    radial-gradient(1.5px 1.5px at 230px 80px, rgba(255,255,255,0.8), rgba(0,0,0,0)),
+                    radial-gradient(1px 1px at 310px 170px, rgba(255,255,255,0.6), rgba(0,0,0,0)),
+                    radial-gradient(1.5px 1.5px at 360px 40px, rgba(255,255,255,0.7), rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 380px 240px;
+}
+
+/* Стеклянные панели (Apple Glassmorphism) */
+.glass-panel {
+  background: rgba(18, 23, 41, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* Кнопки экранного нампада в стиле стекла с 3D фаской и бликом */
+.glass-key {
+  background: linear-gradient(145deg, rgba(32, 38, 62, 0.85) 0%, rgba(16, 20, 36, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+  border-right: 1px solid rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Диагональный глянцевый стеклянный блик на кнопках клавиатуры */
+.glass-key::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.glass-key:active {
+  transform: scale(0.96);
+  background: linear-gradient(145deg, rgba(24, 28, 48, 0.95) 0%, rgba(12, 15, 28, 0.98) 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Неоновая кнопка Enter (градиент синий-бирюзовый) */
+.glass-enter-key {
+  background: linear-gradient(135deg, #1d4ed8 0%, #0284c7 45%, #06b6d4 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+  border-right: 1px solid rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 24px rgba(6, 182, 212, 0.55), 0 0 45px rgba(37, 99, 235, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-enter-key::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.glass-enter-key:active {
+  transform: scale(0.96);
+  filter: brightness(1.15);
+}
+
+/* Неоновая нео-активная плашка уровня */
+.active-level-glow {
+  background: #ffffff;
+  color: #090c19;
+  box-shadow: 0 0 22px rgba(236, 72, 153, 0.75), 0 0 35px rgba(6, 182, 212, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Неоновое свечение активного оператора */
+.active-op-glow {
+  background: linear-gradient(145deg, rgba(37, 99, 235, 0.35) 0%, rgba(139, 92, 246, 0.35) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.9);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.75), 0 0 30px rgba(168, 85, 247, 0.45);
+}
+
+/* Радужная стеклянная рамка поля ввода ответа */
+.iridescent-input-border {
+  background: rgba(14, 18, 34, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.25), 0 0 35px rgba(217, 70, 239, 0.2);
+  position: relative;
+}
+
+.iridescent-input-border::after {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, rgba(217, 70, 239, 0.75) 0%, rgba(59, 130, 246, 0.5) 50%, rgba(6, 182, 212, 0.8) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Стеклянная хромированная кнопка "ЕЩЁ РАЗ" */
+.chrome-again-btn {
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 60%, #cbd5e1 100%);
+  color: #090d1e;
+  border-top: 1px solid rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.7);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 25px rgba(255, 255, 255, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.chrome-again-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 30%;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
+  transform: skewX(-25deg);
+  pointer-events: none;
+}
+
+.chrome-again-btn:active {
+  transform: scale(0.98);
+  filter: brightness(0.96);
+}
+
+/* Неоновая кнопка "ПЕРЕЙТИ К LEVEL 2" */
+.cyan-next-btn {
+  background: linear-gradient(135deg, #1d4ed8 0%, #0284c7 50%, #06b6d4 100%);
+  color: #ffffff;
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.6), 0 0 45px rgba(37, 99, 235, 0.4);
+}
+
+.cyan-next-btn:active {
+  transform: scale(0.98);
+  filter: brightness(1.15);
+}
+
+/* Золотой бейдж рекорда */
+.gold-record-badge {
+  background: rgba(30, 22, 10, 0.75);
+  border: 1px solid rgba(245, 158, 11, 0.65);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+  color: #fef08a;
+}
+
+/* Мигающий курсор */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.blinking-cursor {
+  animation: blink 1s infinite;
+}
