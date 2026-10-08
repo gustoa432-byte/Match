@@ -25,10 +25,23 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Accept Android SDK Licenses
+      - name: Prepare Android Environment & Licenses
         run: |
-          mkdir -p "$ANDROID_HOME/licenses" || true
-          echo "y" | sudo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          # Создаем директории для Android и Keystore и выставляем права пользователя runner
+          mkdir -p "$HOME/.android" "$HOME/.config/.android" "$ANDROID_HOME/licenses"
+          sudo chown -R $USER:$USER "$HOME" || true
+          chmod -R 775 "$HOME/.android" "$HOME/.config" || true
+
+          # Генерируем стандартный debug.keystore заранее, чтобы исключить ошибку прав доступа
+          keytool -genkey -v -keystore "$HOME/.android/debug.keystore" \
+            -storepass android -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US" || true
+          cp -f "$HOME/.android/debug.keystore" "$HOME/.config/.android/debug.keystore" || true
+          chmod 664 "$HOME/.android/debug.keystore" "$HOME/.config/.android/debug.keystore" || true
+
+          # Принимаем все лицензии Android SDK от имени текущего пользователя (без sudo)
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
 
       - name: Install npm dependencies
         run: npm install --legacy-peer-deps
