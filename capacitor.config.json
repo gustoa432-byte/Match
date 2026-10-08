@@ -2,7 +2,6 @@
   "appId": "com.mentalmath.speed",
   "appName": "Mental Math",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "android": {
     "backgroundColor": "#080a15"
   }
