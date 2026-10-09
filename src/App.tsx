@@ -28,6 +28,7 @@ import { ModeSelectModal } from './components/ModeSelectModal';
 import { SkillMapView } from './components/SkillMapView';
 import { CosmicParticles } from './components/CosmicParticles';
 import { sessionService } from './telemetry/sessionService';
+import { syncService } from './telemetry/syncService';
 import { TrainingSession, SessionAnswer, ActiveSessionState } from './telemetry/types';
 import { RecordAnswerResult } from './telemetry/indexedDb';
 
@@ -94,9 +95,10 @@ export default function App() {
   const isSubmittingRef = useRef<boolean>(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Проверка наличия незавершённой сессии при старте приложения
+  // Проверка наличия незавершённой сессии при старте приложения и синхронизация очереди
   useEffect(() => {
     let mounted = true;
+    syncService.triggerSync();
     sessionService
       .getUnfinishedSession()
       .then((res) => {
@@ -563,6 +565,7 @@ export default function App() {
           currentProblem: peekNextProb,
           ladderQueue: peekNextLadderQueue,
           recentProblems: [...recentProblems.slice(-4), currentProblem],
+          seq: problemIndex + 1,
         }
       : null;
 

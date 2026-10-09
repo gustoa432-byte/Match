@@ -368,3 +368,84 @@ export async function closeTelemetryDb(): Promise<void> {
 export function resetTelemetryDbInstanceForTesting(): void {
   dbInstancePromise = null;
 }
+
+/**
+ * Получение элементов очереди синхронизации
+ */
+export async function getPendingSyncQueueItems(limit: number = 50): Promise<SyncQueueItem[]> {
+  if (!isIndexedDbAvailable()) return [];
+  const db = await getTelemetryDb();
+  const tx = db.transaction('syncQueue', 'readonly');
+  const store = tx.objectStore('syncQueue');
+  const items = await store.getAll();
+  items.sort((a, b) => a.createdAt - b.createdAt);
+  return items.slice(0, limit);
+}
+
+/**
+ * Удаление успешно синхронизированных элементов из очереди
+ */
+export async function removeSyncQueueItems(ids: string[]): Promise<void> {
+  if (!isIndexedDbAvailable() || ids.length === 0) return;
+  const db = await getTelemetryDb();
+  const tx = db.transaction('syncQueue', 'readwrite');
+  const store = tx.objectStore('syncQueue');
+  for (const id of ids) {
+    await store.delete(id);
+  }
+  await tx.done;
+}
+
+/**
+ * Обновление статуса попытки синхронизации элемента очереди
+ */
+export async function updateSyncQueueItemStatus(
+  id: string,
+  attempts: number,
+  errorMessage: string | null
+): Promise<void> {
+  if (!isIndexedDbAvailable()) return;
+  const db = await getTelemetryDb();
+  const tx = db.transaction('syncQueue', 'readwrite');
+  const store = tx.objectStore('syncQueue');
+  const item = await store.get(id);
+  if (item) {
+    item.attempts = attempts;
+    item.lastAttemptAt = Date.now();
+    item.errorMessage = errorMessage;
+    await store.put(item);
+  }
+  await tx.done;
+}
+
+/**
+ * Отметка сессий и ответов как синхронизированных
+ */
+export async function markItemsAsSynced(
+  sessionIds: string[],
+  answerIds: string[]
+): Promise<void> {
+  if (!isIndexedDbAvailable()) return;
+  const db = await getTelemetryDb();
+  const tx = db.transaction(['sessions', 'answers'], 'readwrite');
+  const sessionsStore = tx.objectStore('sessions');
+  const answersStore = tx.objectStore('answers');
+
+  for (const sId of sessionIds) {
+    const session = await sessionsStore.get(sId);
+    if (session) {
+      session.syncStatus = 'synced';
+      await sessionsStore.put(session);
+    }
+  }
+
+  for (const aId of answerIds) {
+    const answer = await answersStore.get(aId);
+    if (answer) {
+      answer.syncStatus = 'synced';
+      await answersStore.put(answer);
+    }
+  }
+
+  await tx.done;
+}

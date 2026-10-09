@@ -16,6 +16,7 @@ import {
   RecordAnswerResult,
   isIndexedDbAvailable,
 } from './indexedDb';
+import { syncService } from './syncService';
 
 function generateUuid(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -63,11 +64,13 @@ export class SessionService {
         currentProblem: params.initialProblem,
         ladderQueue: params.ladderQueue || [],
         recentProblems: [],
+        seq: 1,
       },
     };
 
     if (isIndexedDbAvailable()) {
       await createSessionInDb(session);
+      syncService.triggerSync();
     }
 
     return session;
@@ -119,7 +122,7 @@ export class SessionService {
       throw new Error('IndexedDB is not available to securely record this answer.');
     }
 
-    return await recordAnswerInDb(
+    const res = await recordAnswerInDb(
       answer,
       {
         solvedProblemsCount: params.solvedProblemsCount,
@@ -128,6 +131,9 @@ export class SessionService {
       },
       params.nextActiveState
     );
+
+    syncService.triggerSync();
+    return res;
   }
 
   /**
@@ -144,7 +150,9 @@ export class SessionService {
     }
   ): Promise<TrainingSession | null> {
     if (!isIndexedDbAvailable()) return null;
-    return await completeSessionInDb(sessionId, finalStats);
+    const res = await completeSessionInDb(sessionId, finalStats);
+    syncService.triggerSync();
+    return res;
   }
 
   /**
@@ -153,6 +161,7 @@ export class SessionService {
   public async abandonSession(sessionId: string): Promise<void> {
     if (!isIndexedDbAvailable()) return;
     await abandonSessionInDb(sessionId);
+    syncService.triggerSync();
   }
 
   /**

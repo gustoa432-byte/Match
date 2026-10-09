@@ -13,6 +13,7 @@ export interface ActiveSessionState {
   currentProblem: Problem;
   ladderQueue?: Problem[];
   recentProblems?: Problem[];
+  seq?: number; // Монотонный идентификатор ревизии для надёжного разрешения конфликтов
 }
 
 export interface TrainingSession {
