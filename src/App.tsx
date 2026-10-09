@@ -256,7 +256,11 @@ export default function App() {
     const { session, answers } = unfinishedSession;
 
     const reconstructedHistory: SolvedItem[] = answers.map((ans) => ({
-      problem: ans.problem as Problem,
+      problem: {
+        id: ans.id,
+        level: ans.difficulty,
+        ...ans.problem,
+      } as Problem,
       userAnswer: ans.userAnswer,
       isCorrect: ans.isCorrect,
       timeSpentMs: Math.round(ans.responseTimeSec * 1000),
@@ -282,6 +286,10 @@ export default function App() {
 
     if (session.activeState?.ladderQueue) {
       setLadderQueue(session.activeState.ladderQueue);
+    }
+
+    if (session.activeState?.recentProblems) {
+      setRecentProblems(session.activeState.recentProblems);
     }
 
     setCurrentSessionId(session.id);

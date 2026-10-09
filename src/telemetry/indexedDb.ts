@@ -131,13 +131,27 @@ export async function recordAnswerInDb(
     .get([answer.sessionId, answer.problemIndex]);
 
   if (existing) {
-    // Проверка на идентичность ответа
+    // Проверка на идентичность ответа:
+    // Существенными полями являются: результат проверки (isCorrect), ответ пользователя (userAnswer),
+    // и параметры самой задачи (операнды a/b, оператор, верный ответ, тип задачи, proposedAnswer, missingSlot).
+    // Поля responseTimeSec, answeredAt и локальный id ответа допускают различия при повторной доставке (retry/jitter)
+    // и не приводят к конфликту целостности.
+    const isUserAnswerEqual =
+      (existing.userAnswer === null && answer.userAnswer === null) ||
+      (existing.userAnswer !== null &&
+        answer.userAnswer !== null &&
+        String(existing.userAnswer) === String(answer.userAnswer));
+
     const isIdentical =
       existing.isCorrect === answer.isCorrect &&
-      String(existing.userAnswer) === String(answer.userAnswer) &&
+      isUserAnswerEqual &&
       existing.problem.a === answer.problem.a &&
       existing.problem.b === answer.problem.b &&
-      existing.problem.operator === answer.problem.operator;
+      existing.problem.operator === answer.problem.operator &&
+      existing.problem.answer === answer.problem.answer &&
+      (existing.problem.type || 'standard') === (answer.problem.type || 'standard') &&
+      existing.problem.proposedAnswer === answer.problem.proposedAnswer &&
+      existing.problem.missingSlot === answer.problem.missingSlot;
 
     if (isIdentical) {
       await tx.done;
