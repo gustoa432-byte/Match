@@ -1,8 +1,9 @@
 import React from 'react';
 import { DifficultyLevel, Operator } from '../game/generator';
 import { TrainingMode } from './Header';
-import { Play, Sparkles, BarChart2, Zap, Target, Layers } from 'lucide-react';
+import { Play, Sparkles, BarChart2, RotateCcw } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { TrainingSession } from '../telemetry/types';
 
 interface StartViewProps {
   level: DifficultyLevel;
@@ -13,6 +14,8 @@ interface StartViewProps {
   onOpenSkillMap: () => void;
   totalSessions: number;
   bestStreak: number;
+  unfinishedSession?: { session: TrainingSession } | null;
+  onResumeSession?: () => void;
 }
 
 export const StartView: React.FC<StartViewProps> = ({
@@ -24,6 +27,8 @@ export const StartView: React.FC<StartViewProps> = ({
   onOpenSkillMap,
   totalSessions,
   bestStreak,
+  unfinishedSession,
+  onResumeSession,
 }) => {
   const modeLabels: Record<TrainingMode, string> = {
     adaptive: 'Адаптивный ИИ',
@@ -110,16 +115,42 @@ export const StartView: React.FC<StartViewProps> = ({
 
       {/* Нижняя зона: большая кнопка СТАРТ и быстрые действия */}
       <div className="w-full flex flex-col items-center gap-2 pt-1 pb-1 shrink-0">
+        {unfinishedSession && onResumeSession && (
+          <div className="w-full bg-amber-500/15 border border-amber-400/40 rounded-xl p-2.5 flex flex-col gap-1.5 shadow-lg animate-in fade-in">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-amber-300 font-semibold flex items-center gap-1.5">
+                <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                Незавершённая тренировка
+              </span>
+              <span className="text-amber-200/90 font-mono text-[11px] font-bold">
+                {unfinishedSession.session.solvedProblemsCount} / {unfinishedSession.session.totalProblems}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                sound.playStart();
+                onResumeSession();
+              }}
+              className="w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-[0.99] cursor-pointer"
+            >
+              <span>ПРОДОЛЖИТЬ ТРЕНИРОВКУ</span>
+            </button>
+          </div>
+        )}
+
         <button
           type="button"
           onClick={() => {
             sound.playStart();
             onStart();
           }}
-          className="w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:via-blue-500 hover:to-indigo-500 text-white font-extrabold text-base sm:text-lg tracking-wider flex items-center justify-center gap-2.5 shadow-[0_0_25px_rgba(6,182,212,0.45)] active:scale-[0.98] transition-all border border-cyan-300/40 cursor-pointer"
+          className={`w-full ${
+            unfinishedSession ? 'h-10 sm:h-11 text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/15 text-zinc-200 border-white/20' : 'h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:via-blue-500 hover:to-indigo-500 text-white font-extrabold text-base sm:text-lg tracking-wider border-cyan-300/40 shadow-[0_0_25px_rgba(6,182,212,0.45)]'
+          } rounded-xl flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all border cursor-pointer`}
         >
-          <Play className="w-5 h-5 fill-white" />
-          <span>НАЧАТЬ ИГРУ</span>
+          <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+          <span>{unfinishedSession ? 'НАЧАТЬ ЗАНОВО' : 'НАЧАТЬ ИГРУ'}</span>
         </button>
 
         <div className="w-full flex items-center justify-between text-xs text-zinc-400 px-1">

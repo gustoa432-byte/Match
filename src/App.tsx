@@ -27,6 +27,9 @@ import { ResultView, SolvedItem } from './components/ResultView';
 import { ModeSelectModal } from './components/ModeSelectModal';
 import { SkillMapView } from './components/SkillMapView';
 import { CosmicParticles } from './components/CosmicParticles';
+import { sessionService } from './telemetry/sessionService';
+import { TrainingSession, SessionAnswer, ActiveSessionState } from './telemetry/types';
+import { RecordAnswerResult } from './telemetry/indexedDb';
 
 const PROBLEMS_PER_SESSION = 20;
 
@@ -79,6 +82,35 @@ export default function App() {
     isNewBestScore: boolean;
     isNewBestTime: boolean;
   }>({ isNewBestScore: false, isNewBestTime: false });
+
+  // Телеметрия и надёжная фиксация сессий
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const currentSessionIdRef = useRef<string | null>(null);
+  const [unfinishedSession, setUnfinishedSession] = useState<{
+    session: TrainingSession;
+    answers: SessionAnswer[];
+  } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Проверка наличия незавершённой сессии при старте приложения
+  useEffect(() => {
+    let mounted = true;
+    sessionService
+      .getUnfinishedSession()
+      .then((res) => {
+        if (mounted && res) {
+          setUnfinishedSession(res);
+        }
+      })
+      .catch((err) => {
+        console.warn('Не удалось загрузить незавершённую сессию:', err);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const startTimer = useCallback(() => {
     if (timerIntervalRef.current) {
@@ -187,17 +219,109 @@ export default function App() {
     return () => stopTimer();
   }, [stopTimer]);
 
-  const handleStartGame = useCallback(() => {
+  const handleStartGame = useCallback(async () => {
     sound.playStart();
-    startNewSession(level, trainingMode);
-    setGameState('playing');
-  }, [level, trainingMode, startNewSession]);
+    if (unfinishedSession) {
+      await sessionService.abandonSession(unfinishedSession.session.id).catch(console.error);
+      setUnfinishedSession(null);
+    }
+    const first = fetchNextProblem(level, 1, trainingMode, storage, []);
+    let initialLadderQueue: Problem[] = [];
+    if (trainingMode === 'ladder') {
+      const ladder = generateLadderSequence(allowedOperators[0] || '+', 5);
+      initialLadderQueue = ladder.slice(1);
+    }
 
-  const handleRestart = useCallback(() => {
-    sound.playRestart();
+    try {
+      const session = await sessionService.startSession({
+        level,
+        mode: trainingMode,
+        allowedOperators,
+        totalProblems: PROBLEMS_PER_SESSION,
+        initialProblem: first,
+        ladderQueue: initialLadderQueue,
+      });
+      setCurrentSessionId(session.id);
+      currentSessionIdRef.current = session.id;
+    } catch (e) {
+      console.error('Failed to create session in DB:', e);
+    }
+
     startNewSession(level, trainingMode);
     setGameState('playing');
-  }, [level, trainingMode, startNewSession]);
+  }, [level, trainingMode, allowedOperators, unfinishedSession, storage, fetchNextProblem, startNewSession]);
+
+  const handleResumeSession = useCallback(() => {
+    if (!unfinishedSession) return;
+    const { session, answers } = unfinishedSession;
+
+    const reconstructedHistory: SolvedItem[] = answers.map((ans) => ({
+      problem: ans.problem as Problem,
+      userAnswer: ans.userAnswer,
+      isCorrect: ans.isCorrect,
+      timeSpentMs: Math.round(ans.responseTimeSec * 1000),
+    }));
+
+    setLevel(session.level);
+    setTrainingMode(session.mode);
+    setAllowedOperators(session.allowedOperators);
+    setHistory(reconstructedHistory);
+    setStreak(session.activeState?.currentStreak || 0);
+    setSessionMaxStreak(session.activeState?.sessionMaxStreak || 0);
+
+    const nextProblemIndex =
+      session.activeState?.problemIndex || reconstructedHistory.length + 1;
+    setProblemIndex(nextProblemIndex);
+
+    if (session.activeState?.currentProblem) {
+      setCurrentProblem(session.activeState.currentProblem);
+    } else {
+      const nextP = fetchNextProblem(session.level, nextProblemIndex, session.mode, storage, []);
+      setCurrentProblem(nextP);
+    }
+
+    if (session.activeState?.ladderQueue) {
+      setLadderQueue(session.activeState.ladderQueue);
+    }
+
+    setCurrentSessionId(session.id);
+    currentSessionIdRef.current = session.id;
+    setUnfinishedSession(null);
+    setSaveError(null);
+    setGameState('playing');
+    startTimer();
+  }, [unfinishedSession, storage, fetchNextProblem, startTimer]);
+
+  const handleRestart = useCallback(async () => {
+    sound.playRestart();
+    if (currentSessionIdRef.current) {
+      await sessionService.abandonSession(currentSessionIdRef.current).catch(console.error);
+    }
+    const first = fetchNextProblem(level, 1, trainingMode, storage, []);
+    let initialLadderQueue: Problem[] = [];
+    if (trainingMode === 'ladder') {
+      const ladder = generateLadderSequence(allowedOperators[0] || '+', 5);
+      initialLadderQueue = ladder.slice(1);
+    }
+
+    try {
+      const session = await sessionService.startSession({
+        level,
+        mode: trainingMode,
+        allowedOperators,
+        totalProblems: PROBLEMS_PER_SESSION,
+        initialProblem: first,
+        ladderQueue: initialLadderQueue,
+      });
+      setCurrentSessionId(session.id);
+      currentSessionIdRef.current = session.id;
+    } catch (e) {
+      console.error('Failed to create session in DB:', e);
+    }
+
+    startNewSession(level, trainingMode);
+    setGameState('playing');
+  }, [level, trainingMode, allowedOperators, storage, fetchNextProblem, startNewSession]);
 
   // Глобальный ввод с физической клавиатуры
   useEffect(() => {
@@ -301,6 +425,9 @@ export default function App() {
   const handleSelectLevel = (newLevel: DifficultyLevel) => {
     setLevel(newLevel);
     if (gameState === 'playing') {
+      if (currentSessionIdRef.current) {
+        sessionService.abandonSession(currentSessionIdRef.current).catch(console.error);
+      }
       startNewSession(newLevel, trainingMode);
     }
   };
@@ -308,6 +435,9 @@ export default function App() {
   const handleSelectTrainingMode = (newMode: TrainingMode) => {
     setTrainingMode(newMode);
     if (gameState === 'playing') {
+      if (currentSessionIdRef.current) {
+        sessionService.abandonSession(currentSessionIdRef.current).catch(console.error);
+      }
       startNewSession(level, newMode);
     }
   };
@@ -322,6 +452,9 @@ export default function App() {
     }
     setAllowedOperators(next);
     if (gameState === 'playing') {
+      if (currentSessionIdRef.current) {
+        sessionService.abandonSession(currentSessionIdRef.current).catch(console.error);
+      }
       startNewSession(level, trainingMode);
     }
   };
@@ -350,9 +483,10 @@ export default function App() {
     });
   };
 
-  const handleSubmitAnswer = (customAnswer?: string | number) => {
+  const handleSubmitAnswer = async (customAnswer?: string | number) => {
     if (gameState !== 'playing') return;
     if (feedbackState !== 'none') return;
+    if (isSubmittingRef.current) return;
 
     let parsedUserAnswer: number | string | null = null;
     let isCorrect = false;
@@ -384,21 +518,90 @@ export default function App() {
     }
 
     const responseTimeSec = Math.max(0.2, (performance.now() - problemStartTimeRef.current) / 1000);
+    const roundedResponseTime = parseFloat(responseTimeSec.toFixed(2));
 
-    const metric: TaskMetric = {
-      id: `metric-${Date.now()}-${problemIndex}`,
-      operation: currentProblem.operation,
-      operator: currentProblem.operator,
-      a: currentProblem.a,
-      b: currentProblem.b,
-      correctAnswer: currentProblem.answer,
-      userAnswer: parsedUserAnswer,
-      correct: isCorrect,
-      responseTime: parseFloat(responseTimeSec.toFixed(2)),
-      difficulty: level,
-      skillTags: currentProblem.tags,
-      timestamp: Date.now(),
-    };
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+    setSaveError(null);
+
+    const nextStreak = isCorrect ? streak + 1 : 0;
+    const nextMaxStreak = Math.max(sessionMaxStreak, nextStreak);
+    const nextSolvedCount = history.length + 1;
+    const nextCorrectCount = history.filter((h) => h.isCorrect).length + (isCorrect ? 1 : 0);
+
+    // Подготовка снимка следующего шага для надёжного восстановления сессии
+    let peekNextProb: Problem | null = null;
+    let peekNextLadderQueue: Problem[] = ladderQueue;
+    if (nextSolvedCount < PROBLEMS_PER_SESSION) {
+      if (trainingMode === 'ladder' && ladderQueue.length > 0) {
+        peekNextProb = ladderQueue[0];
+        peekNextLadderQueue = ladderQueue.slice(1);
+      } else {
+        peekNextProb = fetchNextProblem(
+          level,
+          problemIndex + 1,
+          trainingMode,
+          storage,
+          [...recentProblems, currentProblem]
+        );
+      }
+    }
+
+    const nextActiveState: ActiveSessionState | null = peekNextProb
+      ? {
+          problemIndex: problemIndex + 1,
+          currentStreak: nextStreak,
+          sessionMaxStreak: nextMaxStreak,
+          currentProblem: peekNextProb,
+          ladderQueue: peekNextLadderQueue,
+          recentProblems: [...recentProblems.slice(-4), currentProblem],
+        }
+      : null;
+
+    let recordResult: RecordAnswerResult | null = null;
+    if (currentSessionIdRef.current) {
+      try {
+        recordResult = await sessionService.recordAnswer({
+          sessionId: currentSessionIdRef.current,
+          problemIndex,
+          problem: currentProblem,
+          userAnswer: parsedUserAnswer,
+          isCorrect,
+          responseTimeSec: roundedResponseTime,
+          level,
+          solvedProblemsCount: nextSolvedCount,
+          correctCount: nextCorrectCount,
+          bestStreak: nextMaxStreak,
+          nextActiveState,
+        });
+      } catch (err: any) {
+        console.error('Ошибка записи ответа в IndexedDB:', err);
+        setSaveError(
+          err?.message ||
+            'Не удалось надёжно сохранить ответ в базу данных. Введённый ответ сохранён. Нажмите Enter для повторной попытки.'
+        );
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+        return; // НЕ ПЕРЕХОДИМ К СЛЕДУЮЩЕЙ ЗАДАЧЕ ПРИ ОШИБКЕ!
+      }
+    }
+
+    const metric: TaskMetric = recordResult
+      ? sessionService.convertAnswerToTaskMetric(recordResult.answer)
+      : {
+          id: `metric-${Date.now()}-${problemIndex}`,
+          operation: currentProblem.operation,
+          operator: currentProblem.operator,
+          a: currentProblem.a,
+          b: currentProblem.b,
+          correctAnswer: currentProblem.answer,
+          userAnswer: parsedUserAnswer,
+          correct: isCorrect,
+          responseTime: roundedResponseTime,
+          difficulty: level,
+          skillTags: currentProblem.tags,
+          timestamp: Date.now(),
+        };
 
     const newStorage: ExtendedStorageData = {
       ...storage,
@@ -417,9 +620,7 @@ export default function App() {
     const updatedHistory = [...history, item];
     setHistory(updatedHistory);
 
-    let nextStreak = streak;
     if (isCorrect) {
-      nextStreak = streak + 1;
       setStreak(nextStreak);
       setSessionMaxStreak((prev) => Math.max(prev, nextStreak));
       setFeedbackState('correct');
@@ -433,7 +634,7 @@ export default function App() {
 
     const delayMs = isCorrect ? 350 : 850;
 
-    window.setTimeout(() => {
+    window.setTimeout(async () => {
       if (problemIndex >= PROBLEMS_PER_SESSION) {
         stopTimer();
         setIsSessionFinished(true);
@@ -447,8 +648,18 @@ export default function App() {
         const finalMaxStreak = Math.max(sessionMaxStreak, nextStreak);
         const accuracy = Math.round((correctCount / PROBLEMS_PER_SESSION) * 100);
 
+        if (currentSessionIdRef.current) {
+          await sessionService.completeSession(currentSessionIdRef.current, {
+            accuracyPercent: accuracy,
+            avgResponseTimeSec: parseFloat(avgTimeSec.toFixed(2)),
+            bestStreak: finalMaxStreak,
+            correctCount,
+            solvedProblemsCount: PROBLEMS_PER_SESSION,
+          }).catch(console.error);
+        }
+
         const sessionRecord: TrainingSessionRecord = {
-          id: `session-${Date.now()}`,
+          id: currentSessionIdRef.current || `session-${Date.now()}`,
           timestamp: Date.now(),
           level,
           mode: trainingMode,
@@ -465,28 +676,23 @@ export default function App() {
         };
         setStorage(finalStorage);
         saveExtendedData(finalStorage);
+
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
       } else {
         setProblemIndex((prev) => prev + 1);
         setCurrentInput('');
         setFeedbackState('none');
         setLastWrongAnswer(null);
 
-        let nextProb: Problem;
-        if (trainingMode === 'ladder' && ladderQueue.length > 0) {
-          nextProb = ladderQueue[0];
-          setLadderQueue(ladderQueue.slice(1));
-        } else {
-          nextProb = fetchNextProblem(
-            level,
-            problemIndex + 1,
-            trainingMode,
-            newStorage,
-            [...recentProblems, currentProblem]
-          );
+        if (peekNextProb) {
+          setCurrentProblem(peekNextProb);
+          setLadderQueue(peekNextLadderQueue);
         }
 
         setRecentProblems((prev) => [...prev.slice(-4), currentProblem]);
-        setCurrentProblem(nextProb);
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
         startTimer();
       }
     }, delayMs);
@@ -535,6 +741,8 @@ export default function App() {
             onOpenSkillMap={() => setIsSkillMapOpen(true)}
             totalSessions={totalSessionsCount}
             bestStreak={overallBestStreak}
+            unfinishedSession={unfinishedSession}
+            onResumeSession={handleResumeSession}
           />
         ) : gameState === 'playing' ? (
           <ProblemView
@@ -551,6 +759,8 @@ export default function App() {
             virtualKeypadOnly={virtualKeypadOnly}
             onToggleKeyboardMode={handleToggleKeyboardMode}
             isAudioMode={trainingMode === 'audio'}
+            errorMessage={saveError}
+            isSubmitting={isSubmitting}
           />
         ) : (
           <ResultView

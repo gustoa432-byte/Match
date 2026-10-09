@@ -19,6 +19,8 @@ interface ProblemViewProps {
   virtualKeypadOnly: boolean;
   onToggleKeyboardMode: () => void;
   isAudioMode: boolean;
+  errorMessage?: string | null;
+  isSubmitting?: boolean;
 }
 
 export const ProblemView: React.FC<ProblemViewProps> = ({
@@ -35,6 +37,8 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
   virtualKeypadOnly,
   onToggleKeyboardMode,
   isAudioMode,
+  errorMessage,
+  isSubmitting,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -57,7 +61,7 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
     }
   };
 
-  const isLocked = feedbackState !== 'none';
+  const isLocked = feedbackState !== 'none' || Boolean(isSubmitting);
   const displayOperator = problem.operator === '−' ? '-' : problem.operator;
 
   // Форматирование таймера в виде 00:03.9 как в референсе
@@ -308,6 +312,12 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
                     : problem.answer}
                 </span>
               </div>
+            </div>
+          )}
+          {errorMessage && (
+            <div className="w-full max-w-xs mx-auto mt-2 p-2 bg-rose-500/20 border border-rose-400/40 rounded-xl text-rose-200 text-xs text-center animate-shake flex flex-col gap-0.5">
+              <span className="font-bold text-rose-300">Ошибка сохранения</span>
+              <span className="text-[11px] leading-tight text-rose-200/90">{errorMessage}</span>
             </div>
           )}
         </div>
