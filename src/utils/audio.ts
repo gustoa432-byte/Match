@@ -5,6 +5,8 @@
 class AppleAudioHaptics {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
+  private clickBuffer: AudioBuffer | null = null;
+  private isWarmedUp: boolean = false;
 
   constructor() {
     try {
@@ -14,6 +16,30 @@ class AppleAudioHaptics {
       }
     } catch {
       // Игнорируем ошибку чтения localStorage
+    }
+
+    // Слушатели первого жеста для мгновенного прогрева AudioContext до первого нажатия
+    if (typeof window !== 'undefined') {
+      const warmUpHandler = () => {
+        this.warmUp();
+        window.removeEventListener('pointerdown', warmUpHandler);
+        window.removeEventListener('keydown', warmUpHandler);
+        window.removeEventListener('touchstart', warmUpHandler);
+      };
+      window.addEventListener('pointerdown', warmUpHandler, { passive: true });
+      window.addEventListener('keydown', warmUpHandler, { passive: true });
+      window.addEventListener('touchstart', warmUpHandler, { passive: true });
+    }
+  }
+
+  public warmUp(): void {
+    if (this.isWarmedUp) return;
+    try {
+      this.initCtx();
+      this.getClickBuffer();
+      this.isWarmedUp = true;
+    } catch {
+      // Игнорируем
     }
   }
 
@@ -27,7 +53,31 @@ class AppleAudioHaptics {
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
+    }
+  }
+
+  /**
+   * Кэшированный буфер щелчка клавиши (предсоздается один раз, чтобы не нагружать CPU/GC в момент тапа)
+   */
+  private getClickBuffer(): AudioBuffer | null {
+    if (!this.ctx) return null;
+    if (this.clickBuffer) return this.clickBuffer;
+
+    try {
+      const bufferSize = Math.max(1, Math.floor(this.ctx.sampleRate * 0.008)); // 8ms
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Генерируем естественный акустический импульс с экспоненциальным затуханием один раз
+      for (let i = 0; i < bufferSize; i++) {
+        const decay = Math.exp(-i / (bufferSize * 0.25));
+        data[i] = (Math.random() * 2 - 1) * decay;
+      }
+      this.clickBuffer = buffer;
+      return buffer;
+    } catch {
+      return null;
     }
   }
 
@@ -64,49 +114,44 @@ class AppleAudioHaptics {
 
   /**
    * Премиальный щелчок клавиши в стиле iOS (Apple Taptic Keyboard Click)
-   * Реализован как деревянно-металлический ультра-короткий импульс с полосовым фильтром
+   * Выполняется асинхронно в микротаске, чтобы ни на 1 мс не блокировать синхронный UI-отклик
    */
   public playClick(): void {
-    this.vibrate(8); // Легкий тактильный тик (light haptic)
-    if (this.isMuted) return;
+    queueMicrotask(() => {
+      this.vibrate(8); // Легкий тактильный тик (light haptic)
+      if (this.isMuted) return;
 
-    try {
-      this.initCtx();
-      if (!this.ctx) return;
+      try {
+        this.initCtx();
+        if (!this.ctx) return;
 
-      const now = this.ctx.currentTime;
-      const bufferSize = this.ctx.sampleRate * 0.008; // 8ms
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
+        const buffer = this.getClickBuffer();
+        if (!buffer) return;
 
-      // Генерируем естественный акустический импульс с экспоненциальным затуханием
-      for (let i = 0; i < bufferSize; i++) {
-        const decay = Math.exp(-i / (bufferSize * 0.25));
-        data[i] = (Math.random() * 2 - 1) * decay;
+        const now = this.ctx.currentTime;
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        // Полосовой фильтр с частотой 2400Гц для приятного матового щелчка как в iOS
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2400, now);
+        filter.Q.setValueAtTime(3.2, now);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        noise.start(now);
+        noise.stop(now + 0.015);
+      } catch {
+        // Игнорируем
       }
-
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = buffer;
-
-      // Полосовой фильтр с частотой 2400Гц для приятного матового щелчка как в iOS
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(2400, now);
-      filter.Q.setValueAtTime(3.2, now);
-
-      const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      noise.start(now);
-      noise.stop(now + 0.015);
-    } catch {
-      // Игнорируем
-    }
+    });
   }
 
   /**

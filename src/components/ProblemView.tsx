@@ -198,16 +198,18 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => {
-                        sound.playClick();
+                      onPointerDown={(e) => {
+                        e.preventDefault();
                         onSubmit(r.label);
+                        sound.playClick();
                       }}
-                      className="glass-key h-12 sm:h-14 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center px-2 py-1 text-white font-mono text-xs sm:text-sm font-bold transition-all active:scale-95 hover:border-cyan-400/60 shadow-lg"
+                      onClick={(e) => e.preventDefault()}
+                      className="glass-key h-12 sm:h-14 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center px-2 py-1 text-white font-mono text-xs sm:text-sm font-bold transition-all active:scale-95 hover:border-cyan-400/60 shadow-lg touch-manipulation"
                     >
-                      <span className="text-[9px] text-zinc-400 font-sans font-normal uppercase tracking-wider mb-0.5">
+                      <span className="text-[9px] text-zinc-400 font-sans font-normal uppercase tracking-wider mb-0.5 pointer-events-none">
                         [{idx + 1}]
                       </span>
-                      <span className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] whitespace-nowrap">
+                      <span className="drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)] whitespace-nowrap pointer-events-none">
                         {r.label}
                       </span>
                     </button>
@@ -221,15 +223,25 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
               <div className="w-full grid grid-cols-2 gap-2 sm:gap-3 mt-0.5">
                 <button
                   type="button"
-                  onClick={() => onSubmit('true')}
-                  className="h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-bold text-base sm:text-lg shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 transition-all"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    onSubmit('true');
+                    sound.playClick();
+                  }}
+                  onClick={(e) => e.preventDefault()}
+                  className="h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-bold text-base sm:text-lg shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 transition-all touch-manipulation"
                 >
                   ВЕРНО
                 </button>
                 <button
                   type="button"
-                  onClick={() => onSubmit('false')}
-                  className="h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-rose-600 to-pink-500 text-white font-bold text-base sm:text-lg shadow-[0_0_20px_rgba(244,63,94,0.4)] active:scale-95 transition-all"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    onSubmit('false');
+                    sound.playClick();
+                  }}
+                  onClick={(e) => e.preventDefault()}
+                  className="h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-rose-600 to-pink-500 text-white font-bold text-base sm:text-lg shadow-[0_0_20px_rgba(244,63,94,0.4)] active:scale-95 transition-all touch-manipulation"
                 >
                   НЕВЕРНО
                 </button>
@@ -240,8 +252,13 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
                   <button
                     key={op}
                     type="button"
-                    onClick={() => onSubmit(op)}
-                    className="glass-key h-12 sm:h-14 rounded-xl sm:rounded-2xl text-white font-bold text-xl sm:text-2xl active:scale-95 transition-all"
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      onSubmit(op);
+                      sound.playClick();
+                    }}
+                    onClick={(e) => e.preventDefault()}
+                    className="glass-key h-12 sm:h-14 rounded-xl sm:rounded-2xl text-white font-bold text-xl sm:text-2xl active:scale-95 transition-all touch-manipulation"
                   >
                     {op === '−' ? '-' : op}
                   </button>

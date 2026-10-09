@@ -407,12 +407,12 @@ export default function App() {
 
       if (/^[0-9]$/.test(e.key)) {
         e.preventDefault();
-        sound.playClick();
         setCurrentInput((prev) => (prev.length < 6 ? prev + e.key : prev));
+        sound.playClick();
       } else if (e.key === 'Backspace') {
         e.preventDefault();
-        sound.playClick();
         setCurrentInput((prev) => prev.slice(0, -1));
+        sound.playClick();
       } else if (e.key === 'Enter') {
         e.preventDefault();
         handleSubmitAnswer();
