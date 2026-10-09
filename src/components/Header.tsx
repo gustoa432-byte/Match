@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DifficultyLevel, Operator } from '../game/generator';
 import {
   Volume2,
@@ -8,6 +8,7 @@ import {
   EyeOff,
   ChevronDown,
   Sparkles,
+  RotateCcw,
 } from 'lucide-react';
 import { sound } from '../utils/audio';
 
@@ -31,7 +32,8 @@ interface HeaderProps {
   onToggleCleanMode: () => void;
   onOpenSkillMap: () => void;
   trainingMode: TrainingMode;
-  onSelectTrainingMode: (mode: TrainingMode) => void;
+  onOpenModeSelect: () => void;
+  onRestart: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -45,9 +47,9 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleCleanMode,
   onOpenSkillMap,
   trainingMode,
-  onSelectTrainingMode,
+  onOpenModeSelect,
+  onRestart,
 }) => {
-  const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false);
   const allOperators: Operator[] = ['+', '−', '×', '÷'];
 
   const modeLabels: Record<TrainingMode, string> = {
@@ -69,46 +71,20 @@ export const Header: React.FC<HeaderProps> = ({
             MENTAL MATH
           </span>
 
-          {/* Быстрое меню режимов */}
-          <div className="relative">
-            <button
-              onClick={() => setIsModeDropdownOpen(!isModeDropdownOpen)}
-              className="px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-[11px] text-zinc-300 hover:text-white flex items-center gap-1 transition-all"
-            >
-              <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-              <span>{modeLabels[trainingMode]}</span>
-              <ChevronDown className="w-2.5 h-2.5 text-zinc-400" />
-            </button>
-
-            {isModeDropdownOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setIsModeDropdownOpen(false)}
-                />
-                <div className="absolute left-0 top-full mt-1.5 w-44 bg-[#0e1326]/95 border border-white/20 backdrop-blur-xl rounded-2xl shadow-2xl py-1.5 z-50 text-xs font-mono">
-                  {(Object.keys(modeLabels) as TrainingMode[]).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => {
-                        onSelectTrainingMode(m);
-                        setIsModeDropdownOpen(false);
-                        sound.playClick();
-                      }}
-                      className={`w-full text-left px-3 py-1.5 transition-colors flex items-center justify-between ${
-                        trainingMode === m
-                          ? 'bg-blue-600/30 text-cyan-300 font-semibold'
-                          : 'text-zinc-300 hover:bg-white/10'
-                      }`}
-                    >
-                      <span>{modeLabels[m]}</span>
-                      {trainingMode === m && <span>✓</span>}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
+          {/* Быстрое меню режимов - открывает надежное модальное окно */}
+          <button
+            type="button"
+            onClick={() => {
+              sound.playClick();
+              onOpenModeSelect();
+            }}
+            className="px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-[11px] font-medium text-cyan-200 hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+            title="Выбрать режим тренировки"
+          >
+            <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+            <span>{modeLabels[trainingMode]}</span>
+            <ChevronDown className="w-2.5 h-2.5 text-zinc-400" />
+          </button>
         </div>
 
         {/* Стеклянная капсула в правом верхнем углу со свечением под ней */}
@@ -116,49 +92,65 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Фоновое бирюзовое свечение */}
           <div className="absolute -inset-1 bg-cyan-500/25 blur-md rounded-full pointer-events-none" />
 
-          <div className="relative flex items-center gap-1 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md shadow-lg">
+          <div className="relative flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md shadow-lg">
+            {/* Кнопка Рестарт */}
+            <button
+              type="button"
+              onClick={() => {
+                sound.playRestart();
+                onRestart();
+              }}
+              title="Начать заново (Рестарт)"
+              className="p-1 text-zinc-300 hover:text-amber-300 transition-colors cursor-pointer active:scale-90"
+            >
+              <RotateCcw className="w-3.5 h-3.5 stroke-[2.2]" />
+            </button>
+
             {/* Чистый режим */}
             <button
+              type="button"
               onClick={() => {
                 onToggleCleanMode();
                 sound.playClick();
               }}
               title={isCleanMode ? 'Чистый режим включён' : 'Обычный режим'}
-              className="p-0.5 sm:p-1 text-zinc-300 hover:text-white transition-colors"
+              className="p-1 text-zinc-300 hover:text-white transition-colors cursor-pointer"
             >
               {isCleanMode ? (
-                <EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
+                <EyeOff className="w-3.5 h-3.5 text-cyan-400" />
               ) : (
-                <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2]" />
+                <Eye className="w-3.5 h-3.5 stroke-[2]" />
               )}
             </button>
 
             {/* Звук */}
             <button
+              type="button"
               onClick={() => {
                 onToggleMute();
                 sound.playClick();
               }}
               title={isMuted ? 'Включить звук' : 'Выключить звук'}
-              className="p-0.5 sm:p-1 text-zinc-300 hover:text-white transition-colors"
+              className="p-1 text-zinc-300 hover:text-white transition-colors cursor-pointer"
             >
               {isMuted ? (
-                <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500" />
+                <VolumeX className="w-3.5 h-3.5 text-zinc-500" />
               ) : (
-                <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2] text-cyan-200" />
+                <Volume2 className="w-3.5 h-3.5 stroke-[2] text-cyan-200" />
               )}
             </button>
 
             {/* Карта навыков / Статистика */}
             <button
+              type="button"
               onClick={() => {
                 onOpenSkillMap();
                 sound.playClick();
               }}
               title="Карта навыков и рекорды"
-              className="p-0.5 sm:p-1 text-zinc-300 hover:text-white transition-colors"
+              className="p-1 text-zinc-300 hover:text-white transition-colors cursor-pointer"
             >
-              <BarChart2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2] text-emerald-400" />
+              <BarChart2 className="w-3.5 h-3.5 stroke-[2] text-emerald-400" />
             </button>
           </div>
         </div>
@@ -172,13 +164,14 @@ export const Header: React.FC<HeaderProps> = ({
             return (
               <button
                 key={lvl}
+                type="button"
                 onClick={() => {
                   if (level !== lvl) {
                     onSelectLevel(lvl);
                     sound.playClick();
                   }
                 }}
-                className={`px-3.5 sm:px-5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all relative ${
+                className={`px-3.5 sm:px-5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all relative cursor-pointer ${
                   isActive
                     ? 'active-level-glow'
                     : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
@@ -199,12 +192,13 @@ export const Header: React.FC<HeaderProps> = ({
           return (
             <button
               key={op}
+              type="button"
               onClick={() => {
                 onToggleOperator(op);
                 sound.playClick();
               }}
               title={`Операция ${op}`}
-              className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center text-base sm:text-xl font-medium transition-all ${
+              className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center text-base sm:text-xl font-medium transition-all cursor-pointer ${
                 isSelected
                   ? 'active-op-glow text-white'
                   : 'bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400'

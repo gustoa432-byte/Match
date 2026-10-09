@@ -21,8 +21,10 @@ import {
 import { adaptiveEngine } from './training/adaptiveEngine';
 import { sound } from './utils/audio';
 import { Header, TrainingMode } from './components/Header';
+import { StartView } from './components/StartView';
 import { ProblemView } from './components/ProblemView';
 import { ResultView, SolvedItem } from './components/ResultView';
+import { ModeSelectModal } from './components/ModeSelectModal';
 import { SkillMapView } from './components/SkillMapView';
 import { CosmicParticles } from './components/CosmicParticles';
 
@@ -38,6 +40,9 @@ export default function App() {
     '÷',
   ]);
   const [trainingMode, setTrainingMode] = useState<TrainingMode>('adaptive');
+
+  // Состояние жизненного цикла игры
+  const [gameState, setGameState] = useState<'idle' | 'playing' | 'finished'>('idle');
 
   // Настройки
   const [isMuted, setIsMuted] = useState<boolean>(() => sound.getMuted());
@@ -70,8 +75,9 @@ export default function App() {
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const timerIntervalRef = useRef<number | null>(null);
 
-  // Карта навыков
+  // Модальные окна
   const [isSkillMapOpen, setIsSkillMapOpen] = useState<boolean>(false);
+  const [isModeModalOpen, setIsModeModalOpen] = useState<boolean>(false);
   const [lastBestInfo, setLastBestInfo] = useState<{
     isNewBestScore: boolean;
     isNewBestTime: boolean;
@@ -179,10 +185,22 @@ export default function App() {
     [level, trainingMode, storage, fetchNextProblem, startTimer, stopTimer]
   );
 
+  // Очистка таймера при размонтировании
   useEffect(() => {
-    startTimer();
     return () => stopTimer();
-  }, [startTimer, stopTimer]);
+  }, [stopTimer]);
+
+  const handleStartGame = useCallback(() => {
+    sound.playStart();
+    startNewSession(level, trainingMode);
+    setGameState('playing');
+  }, [level, trainingMode, startNewSession]);
+
+  const handleRestart = useCallback(() => {
+    sound.playRestart();
+    startNewSession(level, trainingMode);
+    setGameState('playing');
+  }, [level, trainingMode, startNewSession]);
 
   // Глобальный ввод с физической клавиатуры
   useEffect(() => {
@@ -192,8 +210,35 @@ export default function App() {
         return;
       }
 
-      if (isSessionFinished) return;
+      if (isModeModalOpen) {
+        if (e.key === 'Escape') setIsModeModalOpen(false);
+        return;
+      }
+
+      if (gameState === 'idle') {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleStartGame();
+        }
+        return;
+      }
+
+      if (gameState === 'finished') {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleRestart();
+        }
+        return;
+      }
+
+      // Если в режиме игры
       if (feedbackState !== 'none') return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleRestart();
+        return;
+      }
 
       if (currentProblem.type === 'true_false') {
         if (e.key === '1' || e.key.toLowerCase() === 't' || e.key.toLowerCase() === 'в') {
@@ -245,171 +290,170 @@ export default function App() {
 
     window.addEventListener('keydown', handleGlobalKey);
     return () => window.removeEventListener('keydown', handleGlobalKey);
-  }, [isSkillMapOpen, isSessionFinished, feedbackState, currentProblem, currentInput]);
+  }, [
+    isSkillMapOpen,
+    isModeModalOpen,
+    gameState,
+    feedbackState,
+    currentProblem,
+    currentInput,
+    handleStartGame,
+    handleRestart,
+  ]);
 
   const handleSelectLevel = (newLevel: DifficultyLevel) => {
     setLevel(newLevel);
-    startNewSession(newLevel, trainingMode);
+    if (gameState === 'playing') {
+      startNewSession(newLevel, trainingMode);
+    }
   };
 
   const handleSelectTrainingMode = (newMode: TrainingMode) => {
     setTrainingMode(newMode);
-    startNewSession(level, newMode);
+    if (gameState === 'playing') {
+      startNewSession(level, newMode);
+    }
   };
 
   const handleToggleOperator = (op: Operator) => {
-    let nextOps: Operator[];
+    let next: Operator[];
     if (allowedOperators.includes(op)) {
-      if (allowedOperators.length === 1) return;
-      nextOps = allowedOperators.filter((o) => o !== op);
+      if (allowedOperators.length === 1) return; // минимум 1 операция
+      next = allowedOperators.filter((o) => o !== op);
     } else {
-      nextOps = [...allowedOperators, op];
+      next = [...allowedOperators, op];
     }
-    setAllowedOperators(nextOps);
-    setCurrentInput('');
-    const newProblem = generateProblem({
-      level,
-      allowedOperators: nextOps,
-      recentProblems,
-    });
-    setCurrentProblem(newProblem);
-    startTimer();
+    setAllowedOperators(next);
+    if (gameState === 'playing') {
+      startNewSession(level, trainingMode);
+    }
   };
 
   const handleToggleMute = () => {
-    const muted = sound.toggleMute();
-    setIsMuted(muted);
+    const next = sound.toggleMute();
+    setIsMuted(next);
     const updated = {
       ...storage,
-      settings: { ...storage.settings, soundMuted: muted },
+      settings: { ...storage.settings, soundMuted: next },
     };
     setStorage(updated);
     saveExtendedData(updated);
   };
 
   const handleToggleCleanMode = () => {
-    const nextVal = !isCleanMode;
-    setIsCleanMode(nextVal);
-    const updated = {
-      ...storage,
-      settings: { ...storage.settings, cleanMode: nextVal },
-    };
-    setStorage(updated);
-    saveExtendedData(updated);
-    sound.playClick();
+    setIsCleanMode((prev) => {
+      const next = !prev;
+      const updated = {
+        ...storage,
+        settings: { ...storage.settings, cleanMode: next },
+      };
+      setStorage(updated);
+      saveExtendedData(updated);
+      return next;
+    });
   };
 
   const handleToggleKeyboardMode = () => {
-    const nextVal = !virtualKeypadOnly;
-    setVirtualKeypadOnly(nextVal);
-    const updated = {
-      ...storage,
-      settings: { ...storage.settings, virtualKeypadOnly: nextVal },
-    };
-    setStorage(updated);
-    saveExtendedData(updated);
-    sound.playClick();
+    setVirtualKeypadOnly((prev) => {
+      const next = !prev;
+      const updated = {
+        ...storage,
+        settings: { ...storage.settings, virtualKeypadOnly: next },
+      };
+      setStorage(updated);
+      saveExtendedData(updated);
+      return next;
+    });
   };
 
   const handleSubmitAnswer = (customAnswer?: string | number) => {
-    if (feedbackState !== 'none' || isSessionFinished) return;
+    if (gameState !== 'playing') return;
+    if (feedbackState !== 'none') return;
 
-    let submittedAnswer: number | string;
+    let parsedUserAnswer: number | string | null = null;
     let isCorrect = false;
 
-    if (customAnswer !== undefined) {
-      submittedAnswer = customAnswer;
-      if (currentProblem.type === 'true_false') {
-        let actualMath: number;
-        switch (currentProblem.operator) {
-          case '+': actualMath = currentProblem.a + currentProblem.b; break;
-          case '−': actualMath = currentProblem.a - currentProblem.b; break;
-          case '×': actualMath = currentProblem.a * currentProblem.b; break;
-          case '÷': actualMath = Math.round(currentProblem.a / currentProblem.b); break;
-        }
-        const trulyCorrect = currentProblem.proposedAnswer === actualMath;
-        isCorrect = customAnswer === (trulyCorrect ? 'true' : 'false');
-      } else if (currentProblem.type === 'missing_operator') {
-        isCorrect = customAnswer === currentProblem.operator;
-      } else if (currentProblem.type === 'estimation' && currentProblem.estimationRanges) {
-        const correctRange = currentProblem.estimationRanges.find((r) => r.isCorrect);
-        if (typeof customAnswer === 'number') {
-          isCorrect = Boolean(currentProblem.estimationRanges[customAnswer]?.isCorrect);
-          submittedAnswer = currentProblem.estimationRanges[customAnswer]?.label || String(customAnswer);
-        } else {
-          isCorrect = customAnswer === correctRange?.label;
-          submittedAnswer = String(customAnswer);
-        }
-      }
+    if (currentProblem.type === 'true_false') {
+      const ansStr = customAnswer !== undefined ? String(customAnswer) : currentInput.trim();
+      if (!ansStr) return;
+      const isEquationTrue = currentProblem.proposedAnswer === currentProblem.answer;
+      isCorrect = (ansStr === 'true' && isEquationTrue) || (ansStr === 'false' && !isEquationTrue);
+      parsedUserAnswer = ansStr === 'true' ? 'Верно' : 'Неверно';
+    } else if (currentProblem.type === 'missing_operator') {
+      const ansStr = customAnswer !== undefined ? String(customAnswer) : currentInput.trim();
+      if (!ansStr) return;
+      isCorrect = ansStr === currentProblem.operator;
+      parsedUserAnswer = ansStr;
+    } else if (currentProblem.type === 'estimation') {
+      const ansStr = customAnswer !== undefined ? String(customAnswer) : currentInput.trim();
+      if (!ansStr) return;
+      const correctRange = currentProblem.estimationRanges?.find((r) => r.isCorrect);
+      isCorrect = ansStr === correctRange?.label;
+      parsedUserAnswer = ansStr;
     } else {
-      if (currentInput.trim() === '') return;
-      const num = Number(currentInput);
-      submittedAnswer = num;
-      if (currentProblem.type === 'missing_number') {
-        const expected =
-          currentProblem.missingSlot === 'a' ? currentProblem.a : currentProblem.b;
-        isCorrect = num === expected;
-      } else {
-        isCorrect = num === currentProblem.answer;
-      }
+      const rawInput = customAnswer !== undefined ? String(customAnswer) : currentInput.trim();
+      if (rawInput === '') return;
+      const num = parseInt(rawInput, 10);
+      if (isNaN(num)) return;
+      parsedUserAnswer = num;
+      isCorrect = num === currentProblem.answer;
     }
 
-    const timeSpentMs = performance.now() - problemStartTimeRef.current;
-    const responseTimeSec = Number((timeSpentMs / 1000).toFixed(2));
-
-    const newHistoryItem: SolvedItem = {
-      problem: currentProblem,
-      userAnswer: submittedAnswer,
-      isCorrect,
-      timeSpentMs,
-    };
-
-    const updatedHistory = [...history, newHistoryItem];
-    setHistory(updatedHistory);
+    const responseTimeSec = Math.max(0.2, (performance.now() - problemStartTimeRef.current) / 1000);
 
     const metric: TaskMetric = {
-      id: `${Date.now()}-${problemIndex}`,
+      id: `metric-${Date.now()}-${problemIndex}`,
       operation: currentProblem.operation,
       operator: currentProblem.operator,
       a: currentProblem.a,
       b: currentProblem.b,
       correctAnswer: currentProblem.answer,
-      userAnswer: submittedAnswer,
+      userAnswer: parsedUserAnswer,
       correct: isCorrect,
-      responseTime: responseTimeSec,
-      difficulty: currentProblem.level,
+      responseTime: parseFloat(responseTimeSec.toFixed(2)),
+      difficulty: level,
       skillTags: currentProblem.tags,
       timestamp: Date.now(),
     };
 
-    adaptiveEngine.registerProblemResult(metric, problemIndex, storage);
-    const updatedMetrics = [...storage.metricsHistory.slice(-299), metric];
-    const newStorage = { ...storage, metricsHistory: updatedMetrics };
+    const newStorage: ExtendedStorageData = {
+      ...storage,
+      metricsHistory: [...storage.metricsHistory.slice(-299), metric],
+    };
+    adaptiveEngine.registerProblemResult(metric, problemIndex, newStorage);
     setStorage(newStorage);
     saveExtendedData(newStorage);
 
+    const item: SolvedItem = {
+      problem: currentProblem,
+      userAnswer: parsedUserAnswer,
+      isCorrect,
+      timeSpentMs: Math.round(responseTimeSec * 1000),
+    };
+    const updatedHistory = [...history, item];
+    setHistory(updatedHistory);
+
     let nextStreak = streak;
     if (isCorrect) {
-      sound.playCorrect();
-      setFeedbackState('correct');
       nextStreak = streak + 1;
       setStreak(nextStreak);
-      if (nextStreak > sessionMaxStreak) {
-        setSessionMaxStreak(nextStreak);
-      }
+      setSessionMaxStreak((prev) => Math.max(prev, nextStreak));
+      setFeedbackState('correct');
+      sound.playCorrect();
     } else {
-      sound.playWrong();
-      setFeedbackState('wrong');
-      setLastWrongAnswer(submittedAnswer);
       setStreak(0);
+      setFeedbackState('wrong');
+      setLastWrongAnswer(parsedUserAnswer);
+      sound.playWrong();
     }
 
-    const delayMs = isCorrect ? 180 : 520;
+    const delayMs = isCorrect ? 350 : 850;
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       if (problemIndex >= PROBLEMS_PER_SESSION) {
         stopTimer();
         setIsSessionFinished(true);
+        setGameState('finished');
         sound.playComplete();
 
         const correctCount = updatedHistory.filter((h) => h.isCorrect).length;
@@ -471,13 +515,17 @@ export default function App() {
   const averageTimeSec =
     history.length > 0 ? totalTimeSpentSec / history.length : 0;
 
+  const allSessions = storage.trainingHistory || [];
+  const overallBestStreak = allSessions.reduce((max, s) => Math.max(max, s.bestStreak || 0), 0);
+  const totalSessionsCount = allSessions.length;
+
   return (
     <div className="h-full h-[100dvh] max-h-[100dvh] cosmic-bg stars-overlay text-white flex flex-col justify-between selection:bg-cyan-500/30 relative overflow-hidden select-none">
       {/* 57 анимированных левитирующих частиц с глубиной и шейдерным фоном */}
       <CosmicParticles />
 
-      {/* Шапка управления с эффектом стекла и неона */}
-      <div className="relative z-10 w-full shrink-0">
+      {/* Шапка управления с эффектом стекла и неона - z-30 для гарантии чистого наложения */}
+      <div className="relative z-30 w-full shrink-0">
         <Header
           level={level}
           onSelectLevel={handleSelectLevel}
@@ -489,13 +537,25 @@ export default function App() {
           onToggleCleanMode={handleToggleCleanMode}
           onOpenSkillMap={() => setIsSkillMapOpen(true)}
           trainingMode={trainingMode}
-          onSelectTrainingMode={handleSelectTrainingMode}
+          onOpenModeSelect={() => setIsModeModalOpen(true)}
+          onRestart={handleRestart}
         />
       </div>
 
       {/* Основная сцена */}
       <main className="flex-1 min-h-0 flex flex-col justify-center items-center w-full px-2 relative z-10 overflow-hidden">
-        {!isSessionFinished ? (
+        {gameState === 'idle' ? (
+          <StartView
+            level={level}
+            allowedOperators={allowedOperators}
+            trainingMode={trainingMode}
+            onStart={handleStartGame}
+            onOpenModeSelect={() => setIsModeModalOpen(true)}
+            onOpenSkillMap={() => setIsSkillMapOpen(true)}
+            totalSessions={totalSessionsCount}
+            bestStreak={overallBestStreak}
+          />
+        ) : gameState === 'playing' ? (
           <ProblemView
             problem={currentProblem}
             problemIndex={problemIndex}
@@ -511,6 +571,7 @@ export default function App() {
             virtualKeypadOnly={virtualKeypadOnly}
             onToggleKeyboardMode={handleToggleKeyboardMode}
             isAudioMode={trainingMode === 'audio'}
+            onRestart={handleRestart}
           />
         ) : (
           <ResultView
@@ -523,13 +584,14 @@ export default function App() {
             history={history}
             isNewBestScore={lastBestInfo.isNewBestScore}
             isNewBestTime={lastBestInfo.isNewBestTime}
-            onPlayAgain={() => startNewSession(level, trainingMode)}
+            onPlayAgain={handleRestart}
             onNextLevel={
               level < 3
                 ? () => {
                     const next = (level + 1) as DifficultyLevel;
                     setLevel(next);
                     startNewSession(next, trainingMode);
+                    setGameState('playing');
                   }
                 : undefined
             }
@@ -543,24 +605,41 @@ export default function App() {
 
               setAllowedOperators([targetOp]);
               startNewSession(level, 'adaptive');
+              setGameState('playing');
             }}
           />
         )}
       </main>
 
-      {/* Нижняя панель точно как в обоих референсах */}
+      {/* Нижняя панель */}
       <footer className="w-full max-w-sm sm:max-w-md mx-auto py-1.5 sm:py-2 px-3 sm:px-4 flex items-center justify-between text-[10px] sm:text-[11px] font-sans text-zinc-500 border-t border-cyan-500/20 select-none shadow-[0_-1px_12px_rgba(6,182,212,0.15)] relative z-10 shrink-0">
         <div>
-          <span>Enter — ввод</span>
-          <span className="mx-1.5 font-bold text-zinc-600">·</span>
-          <span>1–9 — цифры</span>
+          {gameState === 'idle' ? (
+            <span>Enter или Пробел — старт</span>
+          ) : (
+            <>
+              <span>Enter — ввод</span>
+              <span className="mx-1.5 font-bold text-zinc-600">·</span>
+              <span>1–9 — цифры</span>
+            </>
+          )}
         </div>
         <div>
           <span>{PROBLEMS_PER_SESSION} задач в серии</span>
         </div>
       </footer>
 
-      {/* Модальное окно Карты навыков */}
+      {/* Модальное окно выбора режима - z-[100] над всеми слоями */}
+      <ModeSelectModal
+        isOpen={isModeModalOpen}
+        currentMode={trainingMode}
+        onSelectMode={(newMode) => {
+          handleSelectTrainingMode(newMode);
+        }}
+        onClose={() => setIsModeModalOpen(false)}
+      />
+
+      {/* Модальное окно Карты навыков - z-[100] над всеми слоями */}
       <SkillMapView
         storage={storage}
         isOpen={isSkillMapOpen}
@@ -573,6 +652,7 @@ export default function App() {
           else if (tagOrOp.includes('Делен')) targetOp = '÷';
           setAllowedOperators([targetOp]);
           startNewSession(level, 'adaptive');
+          setGameState('playing');
         }}
       />
     </div>

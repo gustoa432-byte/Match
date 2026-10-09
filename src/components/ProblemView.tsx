@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Problem } from '../game/generator';
 import { Keypad } from './Keypad';
-import { Check, X, Volume2, Keyboard, Smartphone } from 'lucide-react';
+import { Check, X, Volume2, Keyboard, Smartphone, RotateCcw } from 'lucide-react';
 import { speakProblemRussian } from '../training/speech';
 import { sound } from '../utils/audio';
 
@@ -20,6 +20,7 @@ interface ProblemViewProps {
   virtualKeypadOnly: boolean;
   onToggleKeyboardMode: () => void;
   isAudioMode: boolean;
+  onRestart?: () => void;
 }
 
 export const ProblemView: React.FC<ProblemViewProps> = ({
@@ -37,6 +38,7 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
   virtualKeypadOnly,
   onToggleKeyboardMode,
   isAudioMode,
+  onRestart,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -91,7 +93,7 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {streak >= 3 && (
             <span className="text-amber-400 font-bold text-xs flex items-center gap-0.5">
               🔥 {streak}
@@ -101,6 +103,21 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
           <span className="font-mono text-cyan-200/90 tracking-wider tabular-nums text-xs sm:text-sm">
             {formattedTimer}
           </span>
+
+          {onRestart && (
+            <button
+              type="button"
+              onClick={() => {
+                sound.playRestart();
+                onRestart();
+              }}
+              title="Начать заново (Рестарт)"
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] text-zinc-300 hover:text-amber-300 transition-all cursor-pointer active:scale-95 ml-0.5"
+            >
+              <RotateCcw className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400" />
+              <span className="text-[10px] sm:text-[11px] font-medium">Заново</span>
+            </button>
+          )}
         </div>
       </div>
 
