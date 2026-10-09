@@ -220,6 +220,7 @@ export const ProblemView: React.FC<ProblemViewProps> = React.memo(({
                         sound.playClick();
                       }}
                       onClick={(e) => e.preventDefault()}
+                      onContextMenu={(e) => e.preventDefault()}
                       className="glass-key h-12 sm:h-14 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center px-2 py-1 text-white font-mono text-xs sm:text-sm font-bold transition-all active:scale-95 hover:border-cyan-400/60 shadow-lg touch-manipulation"
                     >
                       <span className="text-[9px] text-zinc-400 font-sans font-normal uppercase tracking-wider mb-0.5 pointer-events-none">
@@ -245,6 +246,7 @@ export const ProblemView: React.FC<ProblemViewProps> = React.memo(({
                     sound.playClick();
                   }}
                   onClick={(e) => e.preventDefault()}
+                  onContextMenu={(e) => e.preventDefault()}
                   className="h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-bold text-base sm:text-lg shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 transition-all touch-manipulation"
                 >
                   ВЕРНО
@@ -257,6 +259,7 @@ export const ProblemView: React.FC<ProblemViewProps> = React.memo(({
                     sound.playClick();
                   }}
                   onClick={(e) => e.preventDefault()}
+                  onContextMenu={(e) => e.preventDefault()}
                   className="h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-rose-600 to-pink-500 text-white font-bold text-base sm:text-lg shadow-[0_0_20px_rgba(244,63,94,0.4)] active:scale-95 transition-all touch-manipulation"
                 >
                   НЕВЕРНО
@@ -274,6 +277,7 @@ export const ProblemView: React.FC<ProblemViewProps> = React.memo(({
                       sound.playClick();
                     }}
                     onClick={(e) => e.preventDefault()}
+                    onContextMenu={(e) => e.preventDefault()}
                     className="glass-key h-12 sm:h-14 rounded-xl sm:rounded-2xl text-white font-bold text-xl sm:text-2xl active:scale-95 transition-all touch-manipulation"
                   >
                     {op === '−' ? '-' : op}
