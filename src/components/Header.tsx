@@ -4,11 +4,8 @@ import {
   Volume2,
   VolumeX,
   BarChart2,
-  Eye,
-  EyeOff,
   ChevronDown,
   Sparkles,
-  RotateCcw,
 } from 'lucide-react';
 import { sound } from '../utils/audio';
 
@@ -28,12 +25,9 @@ interface HeaderProps {
   onToggleOperator: (op: Operator) => void;
   isMuted: boolean;
   onToggleMute: () => void;
-  isCleanMode: boolean;
-  onToggleCleanMode: () => void;
   onOpenSkillMap: () => void;
   trainingMode: TrainingMode;
   onOpenModeSelect: () => void;
-  onRestart: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,12 +37,9 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleOperator,
   isMuted,
   onToggleMute,
-  isCleanMode,
-  onToggleCleanMode,
   onOpenSkillMap,
   trainingMode,
   onOpenModeSelect,
-  onRestart,
 }) => {
   const allOperators: Operator[] = ['+', '−', '×', '÷'];
 
@@ -93,36 +84,6 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="absolute -inset-1 bg-cyan-500/25 blur-md rounded-full pointer-events-none" />
 
           <div className="relative flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md shadow-lg">
-            {/* Кнопка Рестарт */}
-            <button
-              type="button"
-              onClick={() => {
-                sound.playRestart();
-                onRestart();
-              }}
-              title="Начать заново (Рестарт)"
-              className="p-1 text-zinc-300 hover:text-amber-300 transition-colors cursor-pointer active:scale-90"
-            >
-              <RotateCcw className="w-3.5 h-3.5 stroke-[2.2]" />
-            </button>
-
-            {/* Чистый режим */}
-            <button
-              type="button"
-              onClick={() => {
-                onToggleCleanMode();
-                sound.playClick();
-              }}
-              title={isCleanMode ? 'Чистый режим включён' : 'Обычный режим'}
-              className="p-1 text-zinc-300 hover:text-white transition-colors cursor-pointer"
-            >
-              {isCleanMode ? (
-                <EyeOff className="w-3.5 h-3.5 text-cyan-400" />
-              ) : (
-                <Eye className="w-3.5 h-3.5 stroke-[2]" />
-              )}
-            </button>
-
             {/* Звук */}
             <button
               type="button"
@@ -155,7 +116,6 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       </div>
-
       {/* Вторая строка: Переключатель уровней в стеклянной капсуле */}
       <div className="flex items-center">
         <div className="p-0.5 sm:p-1 rounded-xl sm:rounded-2xl bg-white/5 border border-white/15 backdrop-blur-md flex items-center gap-1 shadow-inner">

@@ -46,9 +46,6 @@ export default function App() {
 
   // Настройки
   const [isMuted, setIsMuted] = useState<boolean>(() => sound.getMuted());
-  const [isCleanMode, setIsCleanMode] = useState<boolean>(
-    () => storage.settings.cleanMode
-  );
   const [virtualKeypadOnly, setVirtualKeypadOnly] = useState<boolean>(
     () => storage.settings.virtualKeypadOnly
   );
@@ -340,19 +337,6 @@ export default function App() {
     saveExtendedData(updated);
   };
 
-  const handleToggleCleanMode = () => {
-    setIsCleanMode((prev) => {
-      const next = !prev;
-      const updated = {
-        ...storage,
-        settings: { ...storage.settings, cleanMode: next },
-      };
-      setStorage(updated);
-      saveExtendedData(updated);
-      return next;
-    });
-  };
-
   const handleToggleKeyboardMode = () => {
     setVirtualKeypadOnly((prev) => {
       const next = !prev;
@@ -533,12 +517,9 @@ export default function App() {
           onToggleOperator={handleToggleOperator}
           isMuted={isMuted}
           onToggleMute={handleToggleMute}
-          isCleanMode={isCleanMode}
-          onToggleCleanMode={handleToggleCleanMode}
           onOpenSkillMap={() => setIsSkillMapOpen(true)}
           trainingMode={trainingMode}
           onOpenModeSelect={() => setIsModeModalOpen(true)}
-          onRestart={handleRestart}
         />
       </div>
 
@@ -567,11 +548,9 @@ export default function App() {
             lastWrongAnswer={lastWrongAnswer}
             elapsedSeconds={elapsedSeconds}
             streak={streak}
-            isCleanMode={isCleanMode}
             virtualKeypadOnly={virtualKeypadOnly}
             onToggleKeyboardMode={handleToggleKeyboardMode}
             isAudioMode={trainingMode === 'audio'}
-            onRestart={handleRestart}
           />
         ) : (
           <ResultView
