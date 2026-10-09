@@ -68,29 +68,29 @@ export const ResultView: React.FC<ResultViewProps> = ({
   }, [onPlayAgain]);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center w-full max-w-sm sm:max-w-md mx-auto px-3 py-2 select-none animate-in fade-in zoom-in-95 duration-200 font-sans">
+    <div className="flex-1 min-h-0 overflow-y-auto w-full max-w-sm sm:max-w-md mx-auto px-3 py-1.5 sm:py-2 select-none animate-in fade-in zoom-in-95 duration-200 font-sans flex flex-col items-center justify-center">
       {/* Верхняя строка: "LEVEL 1 · СЕРИЯ ЗАВЕРШЕНА" точно как в референсе 1 */}
-      <div className="flex items-center gap-2 text-xs sm:text-sm text-zinc-400 uppercase tracking-widest mb-1.5 font-medium">
+      <div className="flex items-center gap-2 text-xs sm:text-sm text-zinc-400 uppercase tracking-widest mb-1 font-medium">
         <span>LEVEL {level}</span>
         <span>·</span>
         <span>СЕРИЯ ЗАВЕРШЕНА</span>
       </div>
 
       {/* Огромный счёт "18 / 20" с белым сиянием (bloom) как в референсе */}
-      <div className="text-7xl sm:text-8xl font-bold text-white tracking-tight my-1 drop-shadow-[0_0_35px_rgba(255,255,255,0.7)] flex items-baseline justify-center gap-3">
+      <div className="text-6xl sm:text-7xl md:text-8xl font-bold text-white tracking-tight my-1 drop-shadow-[0_0_35px_rgba(255,255,255,0.7)] flex items-baseline justify-center gap-2 sm:gap-3">
         <span>{correctCount}</span>
-        <span className="text-zinc-400 font-light text-5xl sm:text-6xl">/</span>
-        <span className="text-zinc-200 font-normal text-6xl sm:text-7xl">{totalProblems}</span>
+        <span className="text-zinc-400 font-light text-4xl sm:text-5xl md:text-6xl">/</span>
+        <span className="text-zinc-200 font-normal text-5xl sm:text-6xl md:text-7xl">{totalProblems}</span>
       </div>
 
       {/* Процент "90%" */}
-      <div className="text-2xl sm:text-3xl font-light text-zinc-300 mb-4 tracking-wide">
+      <div className="text-xl sm:text-2xl md:text-3xl font-light text-zinc-300 mb-2 sm:mb-3 tracking-wide">
         {percentage}%
       </div>
 
       {/* Золотой бейдж рекорда "🏆 НОВЫЙ РЕКОРД СЧЁТА!" точно как в референсе */}
       {(isNewBestScore || isNewBestTime || correctCount >= 16) && (
-        <div className="mb-5 gold-record-badge px-5 py-2 rounded-full text-xs sm:text-sm font-semibold tracking-wide flex items-center gap-2">
+        <div className="mb-2.5 sm:mb-3.5 gold-record-badge px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide flex items-center gap-2">
           <span className="text-base">🏆</span>
           <span>
             {isNewBestScore
@@ -103,19 +103,19 @@ export const ResultView: React.FC<ResultViewProps> = ({
       )}
 
       {/* Стеклянная плашка с 3 метриками и неоновыми уголками как в референсе */}
-      <div className="w-full relative rounded-3xl p-4 mb-5 border border-white/15 bg-white/5 backdrop-blur-xl shadow-2xl">
+      <div className="w-full relative rounded-2xl sm:rounded-3xl p-3 sm:p-4 mb-3 sm:mb-4 border border-white/15 bg-white/5 backdrop-blur-xl shadow-2xl">
         {/* Неоновые угловые отблески (розовый справа, бирюзовый слева) */}
-        <div className="absolute -top-1 -right-1 w-20 h-20 bg-pink-500/20 blur-xl pointer-events-none rounded-full" />
-        <div className="absolute -bottom-1 -left-1 w-20 h-20 bg-cyan-500/20 blur-xl pointer-events-none rounded-full" />
+        <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-20 sm:h-20 bg-pink-500/20 blur-xl pointer-events-none rounded-full" />
+        <div className="absolute -bottom-1 -left-1 w-16 h-16 sm:w-20 sm:h-20 bg-cyan-500/20 blur-xl pointer-events-none rounded-full" />
 
         <div className="relative grid grid-cols-3 divide-x divide-white/10 text-center">
           {/* СР. ВРЕМЯ */}
           <div className="flex flex-col items-center justify-center px-1">
-            <div className="flex items-center gap-1 text-[11px] text-zinc-400 uppercase tracking-wider mb-1">
-              <Clock className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-zinc-400 uppercase tracking-wider mb-0.5 sm:mb-1">
+              <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span>СР. ВРЕМЯ</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <div className="text-lg sm:text-2xl font-bold text-white tracking-tight">
               {averageTimeSec.toFixed(1)}{' '}
               <span className="text-xs text-zinc-400 font-normal">сек</span>
             </div>
@@ -123,11 +123,11 @@ export const ResultView: React.FC<ResultViewProps> = ({
 
           {/* ОШИБКИ */}
           <div className="flex flex-col items-center justify-center px-1">
-            <div className="text-[11px] text-zinc-400 uppercase tracking-wider mb-1">
+            <div className="text-[10px] sm:text-[11px] text-zinc-400 uppercase tracking-wider mb-0.5 sm:mb-1">
               ОШИБКИ
             </div>
             <div
-              className={`text-xl sm:text-2xl font-bold tracking-tight ${
+              className={`text-lg sm:text-2xl font-bold tracking-tight ${
                 wrongCount > 0 ? 'text-rose-400' : 'text-emerald-400'
               }`}
             >
@@ -137,10 +137,10 @@ export const ResultView: React.FC<ResultViewProps> = ({
 
           {/* СЕРИЯ */}
           <div className="flex flex-col items-center justify-center px-1">
-            <div className="text-[11px] text-zinc-400 uppercase tracking-wider mb-1">
+            <div className="text-[10px] sm:text-[11px] text-zinc-400 uppercase tracking-wider mb-0.5 sm:mb-1">
               СЕРИЯ
             </div>
-            <div className="flex items-center justify-center gap-1.5 text-xl sm:text-2xl font-bold text-amber-400 tracking-tight">
+            <div className="flex items-center justify-center gap-1 text-lg sm:text-2xl font-bold text-amber-400 tracking-tight">
               <span>🔥</span>
               <span>{bestStreak}</span>
             </div>
@@ -149,7 +149,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
       </div>
 
       {/* Кнопки действий точно как в референсе 1 */}
-      <div className="w-full flex flex-col gap-3 font-sans">
+      <div className="w-full flex flex-col gap-2 sm:gap-2.5 font-sans">
         {/* Кнопка 1: Хромированная глянцевая кнопка "ЕЩЁ РАЗ" */}
         <button
           type="button"
@@ -157,9 +157,9 @@ export const ResultView: React.FC<ResultViewProps> = ({
             sound.playClick();
             onPlayAgain();
           }}
-          className="chrome-again-btn w-full h-14 sm:h-15 rounded-2xl flex items-center justify-center gap-2 text-base sm:text-lg font-bold tracking-wide"
+          className="chrome-again-btn w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 text-sm sm:text-base font-bold tracking-wide"
         >
-          <RotateCcw className="w-5 h-5 stroke-[2.5]" />
+          <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
           <span>ЕЩЁ РАЗ</span>
         </button>
 
@@ -171,10 +171,10 @@ export const ResultView: React.FC<ResultViewProps> = ({
               sound.playClick();
               onNextLevel();
             }}
-            className="cyan-next-btn w-full h-14 sm:h-15 rounded-2xl flex items-center justify-center gap-2 text-base sm:text-lg font-bold tracking-wide"
+            className="cyan-next-btn w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 text-sm sm:text-base font-bold tracking-wide"
           >
             <span>ПЕРЕЙТИ К LEVEL {level + 1}</span>
-            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
           </button>
         ) : (
           <button
@@ -183,9 +183,9 @@ export const ResultView: React.FC<ResultViewProps> = ({
               sound.playClick();
               onOpenSkillMap();
             }}
-            className="cyan-next-btn w-full h-14 sm:h-15 rounded-2xl flex items-center justify-center gap-2 text-base sm:text-lg font-bold tracking-wide"
+            className="cyan-next-btn w-full h-12 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 text-sm sm:text-base font-bold tracking-wide"
           >
-            <Activity className="w-5 h-5 stroke-[2.5]" />
+            <Activity className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
             <span>КАРТА НАВЫКОВ</span>
           </button>
         )}

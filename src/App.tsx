@@ -472,12 +472,12 @@ export default function App() {
     history.length > 0 ? totalTimeSpentSec / history.length : 0;
 
   return (
-    <div className="min-h-screen cosmic-bg stars-overlay text-white flex flex-col justify-between selection:bg-cyan-500/30 relative overflow-x-hidden">
+    <div className="h-full h-[100dvh] max-h-[100dvh] cosmic-bg stars-overlay text-white flex flex-col justify-between selection:bg-cyan-500/30 relative overflow-hidden select-none">
       {/* 57 анимированных левитирующих частиц с глубиной и шейдерным фоном */}
       <CosmicParticles />
 
       {/* Шапка управления с эффектом стекла и неона */}
-      <div className="relative z-10 w-full">
+      <div className="relative z-10 w-full shrink-0">
         <Header
           level={level}
           onSelectLevel={handleSelectLevel}
@@ -494,7 +494,7 @@ export default function App() {
       </div>
 
       {/* Основная сцена */}
-      <main className="flex-1 flex flex-col justify-center items-center w-full px-2 relative z-10">
+      <main className="flex-1 min-h-0 flex flex-col justify-center items-center w-full px-2 relative z-10 overflow-hidden">
         {!isSessionFinished ? (
           <ProblemView
             problem={currentProblem}
@@ -549,7 +549,7 @@ export default function App() {
       </main>
 
       {/* Нижняя панель точно как в обоих референсах */}
-      <footer className="w-full max-w-sm sm:max-w-md mx-auto py-2.5 px-4 flex items-center justify-between text-[11px] font-sans text-zinc-500 border-t border-cyan-500/20 select-none shadow-[0_-1px_12px_rgba(6,182,212,0.15)] relative z-10">
+      <footer className="w-full max-w-sm sm:max-w-md mx-auto py-1.5 sm:py-2 px-3 sm:px-4 flex items-center justify-between text-[10px] sm:text-[11px] font-sans text-zinc-500 border-t border-cyan-500/20 select-none shadow-[0_-1px_12px_rgba(6,182,212,0.15)] relative z-10 shrink-0">
         <div>
           <span>Enter — ввод</span>
           <span className="mx-1.5 font-bold text-zinc-600">·</span>

@@ -61,11 +61,11 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="w-full max-w-sm sm:max-w-md mx-auto pt-4 pb-2 px-3 flex flex-col gap-3 font-sans select-none">
+    <header className="w-full max-w-sm sm:max-w-md mx-auto pt-2 sm:pt-4 pb-1 sm:pb-2 px-3 flex flex-col gap-1.5 sm:gap-2.5 font-sans select-none shrink-0">
       {/* Верхняя строка: MENTAL MATH и стеклянный островок с иконками */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-base sm:text-lg font-bold tracking-wider text-white">
+          <span className="text-sm sm:text-base font-bold tracking-wider text-white">
             MENTAL MATH
           </span>
 
@@ -111,12 +111,12 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Стеклянная капсула в правом верхнем углу со свечением под ней (как в референсе) */}
+        {/* Стеклянная капсула в правом верхнем углу со свечением под ней */}
         <div className="relative">
           {/* Фоновое бирюзовое свечение */}
           <div className="absolute -inset-1 bg-cyan-500/25 blur-md rounded-full pointer-events-none" />
 
-          <div className="relative flex items-center gap-1 sm:gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md shadow-lg">
+          <div className="relative flex items-center gap-1 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md shadow-lg">
             {/* Чистый режим */}
             <button
               onClick={() => {
@@ -124,12 +124,12 @@ export const Header: React.FC<HeaderProps> = ({
                 sound.playClick();
               }}
               title={isCleanMode ? 'Чистый режим включён' : 'Обычный режим'}
-              className="p-1 text-zinc-300 hover:text-white transition-colors"
+              className="p-0.5 sm:p-1 text-zinc-300 hover:text-white transition-colors"
             >
               {isCleanMode ? (
-                <EyeOff className="w-4 h-4 text-cyan-400" />
+                <EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
               ) : (
-                <Eye className="w-4 h-4 stroke-[2]" />
+                <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2]" />
               )}
             </button>
 
@@ -140,12 +140,12 @@ export const Header: React.FC<HeaderProps> = ({
                 sound.playClick();
               }}
               title={isMuted ? 'Включить звук' : 'Выключить звук'}
-              className="p-1 text-zinc-300 hover:text-white transition-colors"
+              className="p-0.5 sm:p-1 text-zinc-300 hover:text-white transition-colors"
             >
               {isMuted ? (
-                <VolumeX className="w-4 h-4 text-zinc-500" />
+                <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500" />
               ) : (
-                <Volume2 className="w-4 h-4 stroke-[2] text-cyan-200" />
+                <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2] text-cyan-200" />
               )}
             </button>
 
@@ -156,17 +156,17 @@ export const Header: React.FC<HeaderProps> = ({
                 sound.playClick();
               }}
               title="Карта навыков и рекорды"
-              className="p-1 text-zinc-300 hover:text-white transition-colors"
+              className="p-0.5 sm:p-1 text-zinc-300 hover:text-white transition-colors"
             >
-              <BarChart2 className="w-4 h-4 stroke-[2] text-emerald-400" />
+              <BarChart2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2] text-emerald-400" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Вторая строка: Переключатель уровней в стеклянной капсуле точно как в референсе */}
+      {/* Вторая строка: Переключатель уровней в стеклянной капсуле */}
       <div className="flex items-center">
-        <div className="p-1 rounded-2xl bg-white/5 border border-white/15 backdrop-blur-md flex items-center gap-1 shadow-inner">
+        <div className="p-0.5 sm:p-1 rounded-xl sm:rounded-2xl bg-white/5 border border-white/15 backdrop-blur-md flex items-center gap-1 shadow-inner">
           {([1, 2, 3] as DifficultyLevel[]).map((lvl) => {
             const isActive = level === lvl;
             return (
@@ -178,7 +178,7 @@ export const Header: React.FC<HeaderProps> = ({
                     sound.playClick();
                   }
                 }}
-                className={`px-4 sm:px-5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all relative ${
+                className={`px-3.5 sm:px-5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all relative ${
                   isActive
                     ? 'active-level-glow'
                     : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
@@ -192,7 +192,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Третья строка: 4 квадратных кнопки операций [+] [−] [×] [÷] */}
-      <div className="flex items-center gap-2 pt-0.5">
+      <div className="flex items-center gap-1.5 sm:gap-2 pt-0 sm:pt-0.5">
         {allOperators.map((op) => {
           const isSelected = allowedOperators.includes(op);
           const displayChar = op === '−' ? '-' : op;
@@ -204,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
                 sound.playClick();
               }}
               title={`Операция ${op}`}
-              className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-lg sm:text-xl font-medium transition-all ${
+              className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center text-base sm:text-xl font-medium transition-all ${
                 isSelected
                   ? 'active-op-glow text-white'
                   : 'bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400'
