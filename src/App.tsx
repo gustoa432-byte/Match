@@ -708,6 +708,13 @@ export default function App() {
     }, delayMs);
   };
 
+  const handleSubmitAnswerRef = useRef(handleSubmitAnswer);
+  handleSubmitAnswerRef.current = handleSubmitAnswer;
+
+  const handleStableSubmitAnswer = useCallback((customAnswer?: string | number) => {
+    return handleSubmitAnswerRef.current(customAnswer);
+  }, []);
+
   const correctCount = history.filter((h) => h.isCorrect).length;
   const wrongCount = history.filter((h) => !h.isCorrect).length;
   const totalTimeSpentSec =
@@ -763,7 +770,7 @@ export default function App() {
             onInputChange={setCurrentInput}
             onAppendDigit={handleAppendDigit}
             onBackspace={handleBackspace}
-            onSubmit={handleSubmitAnswer}
+            onSubmit={handleStableSubmitAnswer}
             feedbackState={feedbackState}
             lastWrongAnswer={lastWrongAnswer}
             problemStartTime={problemStartTime}
