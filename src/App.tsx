@@ -71,10 +71,10 @@ export default function App() {
   const [sessionMaxStreak, setSessionMaxStreak] = useState<number>(0);
   const [isSessionFinished, setIsSessionFinished] = useState<boolean>(false);
 
-  // Точный таймер
+  // Высокоточный таймер без фоновых интервалов и ре-рендеров
   const problemStartTimeRef = useRef<number>(performance.now());
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const timerIntervalRef = useRef<number | null>(null);
+  const [problemStartTime, setProblemStartTime] = useState<number>(() => performance.now());
+  const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
 
   // Модальные окна
   const [isSkillMapOpen, setIsSkillMapOpen] = useState<boolean>(false);
@@ -115,23 +115,14 @@ export default function App() {
   }, []);
 
   const startTimer = useCallback(() => {
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-    }
-    problemStartTimeRef.current = performance.now();
-    setElapsedSeconds(0);
-
-    timerIntervalRef.current = window.setInterval(() => {
-      const now = performance.now();
-      setElapsedSeconds((now - problemStartTimeRef.current) / 1000);
-    }, 80);
+    const now = performance.now();
+    problemStartTimeRef.current = now;
+    setProblemStartTime(now);
+    setIsTimerRunning(true);
   }, []);
 
   const stopTimer = useCallback(() => {
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
+    setIsTimerRunning(false);
   }, []);
 
   const fetchNextProblem = useCallback(
@@ -493,6 +484,14 @@ export default function App() {
     });
   };
 
+  const handleAppendDigit = useCallback((digit: string) => {
+    setCurrentInput((prev) => (prev.length < 6 ? prev + digit : prev));
+  }, []);
+
+  const handleBackspace = useCallback(() => {
+    setCurrentInput((prev) => prev.slice(0, -1));
+  }, []);
+
   const handleSubmitAnswer = async (customAnswer?: string | number) => {
     if (gameState !== 'playing') return;
     if (feedbackState !== 'none') return;
@@ -762,10 +761,13 @@ export default function App() {
             totalProblems={PROBLEMS_PER_SESSION}
             currentInput={currentInput}
             onInputChange={setCurrentInput}
+            onAppendDigit={handleAppendDigit}
+            onBackspace={handleBackspace}
             onSubmit={handleSubmitAnswer}
             feedbackState={feedbackState}
             lastWrongAnswer={lastWrongAnswer}
-            elapsedSeconds={elapsedSeconds}
+            problemStartTime={problemStartTime}
+            isTimerRunning={isTimerRunning && feedbackState === 'none'}
             streak={streak}
             virtualKeypadOnly={virtualKeypadOnly}
             onToggleKeyboardMode={handleToggleKeyboardMode}

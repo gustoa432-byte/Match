@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Problem } from '../game/generator';
 import { Keypad } from './Keypad';
+import { TimerDisplay } from './TimerDisplay';
 import { Check, X, Volume2, Keyboard, Smartphone } from 'lucide-react';
 import { speakProblemRussian } from '../training/speech';
 import { sound } from '../utils/audio';
@@ -11,10 +12,14 @@ interface ProblemViewProps {
   totalProblems: number;
   currentInput: string;
   onInputChange: (val: string) => void;
+  onAppendDigit?: (digit: string) => void;
+  onBackspace?: () => void;
   onSubmit: (customAnswer?: string | number) => void;
   feedbackState: 'none' | 'correct' | 'wrong';
   lastWrongAnswer?: number | string | null;
-  elapsedSeconds: number;
+  elapsedSeconds?: number;
+  problemStartTime?: number;
+  isTimerRunning?: boolean;
   streak: number;
   virtualKeypadOnly: boolean;
   onToggleKeyboardMode: () => void;
@@ -23,16 +28,20 @@ interface ProblemViewProps {
   isSubmitting?: boolean;
 }
 
-export const ProblemView: React.FC<ProblemViewProps> = ({
+export const ProblemView: React.FC<ProblemViewProps> = React.memo(({
   problem,
   problemIndex,
   totalProblems,
   currentInput,
   onInputChange,
+  onAppendDigit,
+  onBackspace,
   onSubmit,
   feedbackState,
   lastWrongAnswer,
-  elapsedSeconds,
+  elapsedSeconds = 0,
+  problemStartTime,
+  isTimerRunning,
   streak,
   virtualKeypadOnly,
   onToggleKeyboardMode,
@@ -64,7 +73,7 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
   const isLocked = feedbackState !== 'none' || Boolean(isSubmitting);
   const displayOperator = problem.operator === '−' ? '-' : problem.operator;
 
-  // Форматирование таймера в виде 00:03.9 как в референсе
+  // Форматирование таймера для обратной совместимости при отсутствии problemStartTime
   const mins = Math.floor(elapsedSeconds / 60)
     .toString()
     .padStart(2, '0');
@@ -100,9 +109,16 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
             </span>
           )}
 
-          <span className="font-mono text-cyan-200/90 tracking-wider tabular-nums text-xs sm:text-sm">
-            {formattedTimer}
-          </span>
+          {problemStartTime !== undefined ? (
+            <TimerDisplay
+              startTime={problemStartTime}
+              isRunning={isTimerRunning ?? (feedbackState === 'none')}
+            />
+          ) : (
+            <span className="font-mono text-cyan-200/90 tracking-wider tabular-nums text-xs sm:text-sm">
+              {formattedTimer}
+            </span>
+          )}
         </div>
       </div>
 
@@ -345,18 +361,24 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
         <div className="w-full mt-auto shrink-0 pb-0.5">
           <Keypad
             disabled={isLocked}
-            onKeyPress={(digit) => {
-              if (currentInput.length < 6) {
-                onInputChange(currentInput + digit);
-              }
-            }}
-            onBackspace={() => {
-              onInputChange(currentInput.slice(0, -1));
-            }}
-            onSubmit={() => onSubmit()}
+            onKeyPress={
+              onAppendDigit ??
+              ((digit) => {
+                if (currentInput.length < 6) {
+                  onInputChange(currentInput + digit);
+                }
+              })
+            }
+            onBackspace={
+              onBackspace ??
+              (() => {
+                onInputChange(currentInput.slice(0, -1));
+              })
+            }
+            onSubmit={onSubmit}
           />
         </div>
       )}
     </div>
   );
-};
+});

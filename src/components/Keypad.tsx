@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { Delete, CornerDownLeft } from 'lucide-react';
 import { sound } from '../utils/audio';
 
@@ -9,84 +9,110 @@ interface KeypadProps {
   disabled?: boolean;
 }
 
-export const Keypad: React.FC<KeypadProps> = ({
+const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+/**
+ * Высокопроизводительный стеклянный нампад.
+ * Мемоизирован через React.memo. Не имеет внутреннего useState, что исключает лишние
+ * ре-рендеры при тапах: класс `is-pressed` добавляется напрямую к кнопке на 0мс,
+ * а ввод в состояние родителя и воспроизведение звука происходят мгновенно.
+ */
+export const Keypad: React.FC<KeypadProps> = React.memo(({
   onKeyPress,
   onBackspace,
   onSubmit,
   disabled = false,
 }) => {
-  const [pressedKey, setPressedKey] = useState<string | null>(null);
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent<HTMLButtonElement>, action: () => void, keyId: string) => {
+  const handleKeyPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLButtonElement>) => {
       if (disabled) return;
-      // Предотвращаем симуляцию mouse click, задержку 300мс на мобильных устройствах и зум
       e.preventDefault();
 
-      // 1. Мгновенный синхронный ввод цифры/действия
-      action();
+      const key = e.currentTarget.getAttribute('data-key');
+      if (key) {
+        // 1. Мгновенный синхронный ввод цифры
+        onKeyPress(key);
+      }
 
-      // 2. Мгновенная визуальная реакция кнопки (active state)
-      setPressedKey(keyId);
+      // 2. Мгновенная визуальная реакция кнопки (0ms active state без React re-render)
+      e.currentTarget.classList.add('is-pressed');
 
-      // 3. Звук и вибрация (не блокируют поток отрисовки)
+      // 3. Звук и тактильный отклик (неблокирующий microtask)
       sound.playClick();
     },
-    [disabled]
+    [disabled, onKeyPress]
   );
 
-  const handlePointerRelease = useCallback(
-    (keyId: string) => {
-      if (pressedKey === keyId) {
-        setPressedKey(null);
-      }
+  const handleBackspacePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLButtonElement>) => {
+      if (disabled) return;
+      e.preventDefault();
+
+      // 1. Мгновенное удаление последнего символа
+      onBackspace();
+
+      // 2. Мгновенная физическая реакция
+      e.currentTarget.classList.add('is-pressed');
+
+      // 3. Звук клика
+      sound.playClick();
     },
-    [pressedKey]
+    [disabled, onBackspace]
   );
 
-  const handlePointerLeave = useCallback(() => {
-    setPressedKey(null);
-  }, []);
+  const handleSubmitPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLButtonElement>) => {
+      if (disabled) return;
+      e.preventDefault();
 
-  const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+      // 1. Отправка ответа
+      onSubmit();
+
+      // 2. Мгновенная реакция кнопки Enter
+      e.currentTarget.classList.add('is-pressed');
+
+      // 3. Звук
+      sound.playClick();
+    },
+    [disabled, onSubmit]
+  );
+
+  const handlePointerRelease = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.classList.remove('is-pressed');
+  }, []);
 
   return (
     <div
       className="w-full max-w-sm mx-auto grid grid-cols-3 gap-1.5 sm:gap-2.5 pt-0.5 pb-1 sm:pb-2 px-1 sm:px-2 select-none font-sans touch-none"
-      onPointerLeave={handlePointerLeave}
     >
-      {digits.map((num) => {
-        const isPressed = pressedKey === num;
-        return (
-          <button
-            key={num}
-            type="button"
-            disabled={disabled}
-            onPointerDown={(e) => handlePointerDown(e, () => onKeyPress(num), num)}
-            onPointerUp={() => handlePointerRelease(num)}
-            onPointerCancel={() => handlePointerRelease(num)}
-            onClick={(e) => e.preventDefault()}
-            className={`glass-key h-[clamp(2.7rem,6.2vh,3.5rem)] rounded-xl sm:rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl md:text-3xl font-normal select-none disabled:opacity-50 ${
-              isPressed ? 'is-pressed' : ''
-            }`}
-          >
-            <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] pointer-events-none">{num}</span>
-          </button>
-        );
-      })}
+      {DIGITS.map((num) => (
+        <button
+          key={num}
+          type="button"
+          data-key={num}
+          disabled={disabled}
+          onPointerDown={handleKeyPointerDown}
+          onPointerUp={handlePointerRelease}
+          onPointerLeave={handlePointerRelease}
+          onPointerCancel={handlePointerRelease}
+          onClick={(e) => e.preventDefault()}
+          className="glass-key h-[clamp(2.7rem,6.2vh,3.5rem)] rounded-xl sm:rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl md:text-3xl font-normal select-none disabled:opacity-50"
+        >
+          <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] pointer-events-none">{num}</span>
+        </button>
+      ))}
 
       {/* Кнопка Backspace (стереть) */}
       <button
         type="button"
         disabled={disabled}
-        onPointerDown={(e) => handlePointerDown(e, onBackspace, 'backspace')}
-        onPointerUp={() => handlePointerRelease('backspace')}
-        onPointerCancel={() => handlePointerRelease('backspace')}
+        onPointerDown={handleBackspacePointerDown}
+        onPointerUp={handlePointerRelease}
+        onPointerLeave={handlePointerRelease}
+        onPointerCancel={handlePointerRelease}
         onClick={(e) => e.preventDefault()}
         title="Стереть"
-        className={`glass-key h-[clamp(2.7rem,6.2vh,3.5rem)] rounded-xl sm:rounded-2xl flex items-center justify-center text-zinc-300 hover:text-white select-none disabled:opacity-50 ${
-          pressedKey === 'backspace' ? 'is-pressed' : ''
-        }`}
+        className="glass-key h-[clamp(2.7rem,6.2vh,3.5rem)] rounded-xl sm:rounded-2xl flex items-center justify-center text-zinc-300 hover:text-white select-none disabled:opacity-50"
       >
         <Delete className="w-5 h-5 sm:w-6 sm:h-6 stroke-[1.8] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] pointer-events-none" />
       </button>
@@ -94,14 +120,14 @@ export const Keypad: React.FC<KeypadProps> = ({
       {/* Кнопка 0 */}
       <button
         type="button"
+        data-key="0"
         disabled={disabled}
-        onPointerDown={(e) => handlePointerDown(e, () => onKeyPress('0'), '0')}
-        onPointerUp={() => handlePointerRelease('0')}
-        onPointerCancel={() => handlePointerRelease('0')}
+        onPointerDown={handleKeyPointerDown}
+        onPointerUp={handlePointerRelease}
+        onPointerLeave={handlePointerRelease}
+        onPointerCancel={handlePointerRelease}
         onClick={(e) => e.preventDefault()}
-        className={`glass-key h-[clamp(2.7rem,6.2vh,3.5rem)] rounded-xl sm:rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl md:text-3xl font-normal select-none disabled:opacity-50 ${
-          pressedKey === '0' ? 'is-pressed' : ''
-        }`}
+        className="glass-key h-[clamp(2.7rem,6.2vh,3.5rem)] rounded-xl sm:rounded-2xl flex items-center justify-center text-white text-xl sm:text-2xl md:text-3xl font-normal select-none disabled:opacity-50"
       >
         <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] pointer-events-none">0</span>
       </button>
@@ -110,17 +136,16 @@ export const Keypad: React.FC<KeypadProps> = ({
       <button
         type="button"
         disabled={disabled}
-        onPointerDown={(e) => handlePointerDown(e, onSubmit, 'enter')}
-        onPointerUp={() => handlePointerRelease('enter')}
-        onPointerCancel={() => handlePointerRelease('enter')}
+        onPointerDown={handleSubmitPointerDown}
+        onPointerUp={handlePointerRelease}
+        onPointerLeave={handlePointerRelease}
+        onPointerCancel={handlePointerRelease}
         onClick={(e) => e.preventDefault()}
         title="Подтвердить (Enter)"
-        className={`glass-enter-key h-[clamp(2.7rem,6.2vh,3.5rem)] rounded-xl sm:rounded-2xl flex items-center justify-center text-white select-none disabled:opacity-50 ${
-          pressedKey === 'enter' ? 'is-pressed' : ''
-        }`}
+        className="glass-enter-key h-[clamp(2.7rem,6.2vh,3.5rem)] rounded-xl sm:rounded-2xl flex items-center justify-center text-white select-none disabled:opacity-50"
       >
         <CornerDownLeft className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5] drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] pointer-events-none" />
       </button>
     </div>
   );
-};
+});
