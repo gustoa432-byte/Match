@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
               sound.playClick();
               onOpenModeSelect();
             }}
-            className="px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-[11px] font-medium text-cyan-200 hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95"
+            className="px-2.5 py-0.5 rounded-full bg-white/[0.11] hover:bg-white/20 border border-white/20 text-[11px] font-medium text-cyan-200 hover:text-white flex items-center gap-1 transition-all cursor-pointer active:scale-95"
             title="Выбрать режим тренировки"
           >
             <Sparkles className="w-2.5 h-2.5 text-amber-400" />
@@ -83,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Фоновое бирюзовое свечение */}
           <div className="absolute -inset-1 bg-cyan-500/25 blur-md rounded-full pointer-events-none" />
 
-          <div className="relative flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md shadow-lg">
+          <div className="relative flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-white/[0.11] border border-white/20 shadow-lg">
             {/* Звук */}
             <button
               type="button"
@@ -116,9 +116,9 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       </div>
-      {/* Вторая строка: Переключатель уровней в стеклянной капсуле */}
+      {/* Вторая строка: Переключатель уровней в прозрачной стеклянной капсуле */}
       <div className="flex items-center">
-        <div className="p-0.5 sm:p-1 rounded-xl sm:rounded-2xl bg-white/5 border border-white/15 backdrop-blur-md flex items-center gap-1 shadow-inner">
+        <div className="p-0.5 sm:p-1 rounded-xl sm:rounded-2xl bg-white/[0.11] border border-white/20 flex items-center gap-1 shadow-inner">
           {([1, 2, 3] as DifficultyLevel[]).map((lvl) => {
             const isActive = level === lvl;
             return (
@@ -134,7 +134,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className={`px-3.5 sm:px-5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all relative cursor-pointer ${
                   isActive
                     ? 'active-level-glow'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.11]'
                 }`}
               >
                 LEVEL {lvl}
@@ -161,7 +161,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center text-base sm:text-xl font-medium transition-all cursor-pointer ${
                 isSelected
                   ? 'active-op-glow text-white'
-                  : 'bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400'
+                  : 'bg-white/[0.11] hover:bg-white/20 border border-white/20 text-zinc-400'
               }`}
             >
               <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{displayChar}</span>

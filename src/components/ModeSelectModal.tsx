@@ -90,7 +90,7 @@ export const ModeSelectModal: React.FC<ModeSelectModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 select-none touch-manipulation"
+      className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-3 sm:p-4 select-none touch-manipulation"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           sound.playClick();
@@ -116,7 +116,7 @@ export const ModeSelectModal: React.FC<ModeSelectModalProps> = ({
               sound.playClick();
               onClose();
             }}
-            className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+            className="w-7 h-7 rounded-full bg-white/[0.11] hover:bg-white/20 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -138,7 +138,7 @@ export const ModeSelectModal: React.FC<ModeSelectModalProps> = ({
                 className={`w-full text-left p-2 sm:p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2.5 group cursor-pointer ${
                   isSelected
                     ? 'bg-cyan-500/20 border-cyan-400/80 shadow-[0_0_15px_rgba(6,182,212,0.25)]'
-                    : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-white/20'
+                    : 'bg-white/[0.11] hover:bg-white/20 border-white/15 hover:border-white/25'
                 }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -146,7 +146,7 @@ export const ModeSelectModal: React.FC<ModeSelectModalProps> = ({
                     className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                       isSelected
                         ? 'bg-cyan-500/30 text-cyan-200'
-                        : 'bg-white/5 text-zinc-400 group-hover:text-zinc-200'
+                        : 'bg-white/[0.08] text-zinc-400 group-hover:text-zinc-200'
                     }`}
                   >
                     {m.icon}

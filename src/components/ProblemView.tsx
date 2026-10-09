@@ -113,7 +113,7 @@ export const ProblemView: React.FC<ProblemViewProps> = ({
           <button
             type="button"
             onClick={() => speakProblemRussian(problem.a, problem.operator, problem.b)}
-            className="flex items-center gap-1.5 px-3 py-0.5 bg-white/10 border border-white/20 rounded-full text-xs text-cyan-300 hover:text-white mb-2 backdrop-blur-md shrink-0"
+            className="flex items-center gap-1.5 px-3 py-0.5 bg-white/[0.11] border border-white/20 rounded-full text-xs text-cyan-300 hover:text-white mb-2 shrink-0"
           >
             <Volume2 className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
             <span>Повторить голос</span>

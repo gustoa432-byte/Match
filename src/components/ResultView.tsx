@@ -102,8 +102,8 @@ export const ResultView: React.FC<ResultViewProps> = ({
         </div>
       )}
 
-      {/* Стеклянная плашка с 3 метриками и неоновыми уголками как в референсе */}
-      <div className="w-full relative rounded-2xl sm:rounded-3xl p-3 sm:p-4 mb-3 sm:mb-4 border border-white/15 bg-white/5 backdrop-blur-xl shadow-2xl">
+      {/* Прозрачная стеклянная плашка с 3 метриками и неоновыми уголками (89% прозрачности, 11% непрозрачности) */}
+      <div className="w-full relative rounded-2xl sm:rounded-3xl p-3 sm:p-4 mb-3 sm:mb-4 border border-white/20 bg-white/[0.11] shadow-2xl">
         {/* Неоновые угловые отблески (розовый справа, бирюзовый слева) */}
         <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-20 sm:h-20 bg-pink-500/20 blur-xl pointer-events-none rounded-full" />
         <div className="absolute -bottom-1 -left-1 w-16 h-16 sm:w-20 sm:h-20 bg-cyan-500/20 blur-xl pointer-events-none rounded-full" />
@@ -190,7 +190,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
           </button>
         )}
 
-        {/* Кнопка 3: Стеклянная пилюля "Показать историю примеров ∨" точно как в референсе */}
+        {/* Кнопка 3: Прозрачная стеклянная пилюля "Показать историю примеров ∨" (89% прозрачности, 11% непрозрачности) */}
         {history.length > 0 && (
           <button
             type="button"
@@ -198,7 +198,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
               sound.playClick();
               setShowBreakdown(!showBreakdown);
             }}
-            className="w-full h-12 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/15 text-zinc-300 text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-all shadow-sm"
+            className="w-full h-12 rounded-2xl bg-white/[0.11] hover:bg-white/20 border border-white/20 text-zinc-300 text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-all shadow-sm"
           >
             <span>
               {showBreakdown ? 'Скрыть историю примеров' : 'Показать историю примеров'}
@@ -212,9 +212,9 @@ export const ResultView: React.FC<ResultViewProps> = ({
         )}
       </div>
 
-      {/* Раскрывающийся список истории примеров */}
+      {/* Раскрывающийся список истории примеров из прозрачного стекла */}
       {showBreakdown && history.length > 0 && (
-        <div className="w-full mt-3 max-h-52 overflow-y-auto border border-white/15 rounded-2xl bg-[#0d1224]/80 backdrop-blur-xl divide-y divide-white/10 text-xs sm:text-sm font-mono">
+        <div className="w-full mt-3 max-h-52 overflow-y-auto border border-white/20 rounded-2xl bg-white/[0.11] divide-y divide-white/10 text-xs sm:text-sm font-mono">
           {history.map((item, idx) => (
             <div key={idx} className="flex items-center justify-between px-4 py-2.5">
               <div className="flex items-center gap-2.5">

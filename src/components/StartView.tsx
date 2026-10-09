@@ -68,8 +68,8 @@ export const StartView: React.FC<StartViewProps> = ({
           </p>
         </div>
 
-        {/* Стеклянная информационная панель с выбранными параметрами */}
-        <div className="w-full bg-[#121729]/80 border border-white/15 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-xl flex flex-col gap-2.5">
+        {/* Прозрачная стеклянная информационная панель (89% прозрачности, 11% непрозрачности) */}
+        <div className="w-full bg-white/[0.11] border border-white/20 rounded-2xl p-3 sm:p-4 shadow-xl flex flex-col gap-2.5">
           {/* Режим тренировки */}
           <div className="flex items-center justify-between pb-2 border-b border-white/10">
             <span className="text-xs text-zinc-400">Режим:</span>
@@ -89,11 +89,11 @@ export const StartView: React.FC<StartViewProps> = ({
 
           {/* Уровень сложности и операции */}
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
+            <div className="bg-white/[0.11] rounded-xl p-2 border border-white/15 flex flex-col">
               <span className="text-[10px] text-zinc-400">Сложность</span>
               <span className="font-bold text-white text-sm">УРОВЕНЬ {level}</span>
             </div>
-            <div className="bg-white/5 rounded-xl p-2 border border-white/5 flex flex-col">
+            <div className="bg-white/[0.11] rounded-xl p-2 border border-white/15 flex flex-col">
               <span className="text-[10px] text-zinc-400">Операции</span>
               <span className="font-bold text-cyan-300 font-mono text-sm tracking-wider">
                 {allowedOperators.join(' ')}
@@ -146,7 +146,7 @@ export const StartView: React.FC<StartViewProps> = ({
             onStart();
           }}
           className={`w-full ${
-            unfinishedSession ? 'h-10 sm:h-11 text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/15 text-zinc-200 border-white/20' : 'h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:via-blue-500 hover:to-indigo-500 text-white font-extrabold text-base sm:text-lg tracking-wider border-cyan-300/40 shadow-[0_0_25px_rgba(6,182,212,0.45)]'
+            unfinishedSession ? 'h-10 sm:h-11 text-xs sm:text-sm font-semibold bg-white/[0.11] hover:bg-white/20 text-zinc-200 border-white/20' : 'h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:via-blue-500 hover:to-indigo-500 text-white font-extrabold text-base sm:text-lg tracking-wider border-cyan-300/40 shadow-[0_0_25px_rgba(6,182,212,0.45)]'
           } rounded-xl flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all border cursor-pointer`}
         >
           <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />

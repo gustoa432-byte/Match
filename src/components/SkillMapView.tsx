@@ -31,7 +31,7 @@ export const SkillMapView: React.FC<SkillMapViewProps> = ({
   const activeWeakSpots = (storage.weakSpots || []).filter((w) => !w.isResolved);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 select-none">
+    <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 sm:p-4 select-none">
       <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150 font-mono">
         {/* Шапка модалки */}
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
