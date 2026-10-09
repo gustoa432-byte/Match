@@ -5,7 +5,7 @@ import {
   markItemsAsSynced,
 } from './indexedDb';
 import { TrainingSession, SessionAnswer, SyncQueueItem } from './types';
-import { getSupabaseClient, getAuthenticatedUser } from './supabaseClient';
+import { getSupabaseClient, getAuthenticatedUser, canUseNetwork } from './supabaseClient';
 
 export const MAX_ANSWERS_PER_BATCH = 25;
 
@@ -15,6 +15,15 @@ export interface SyncBatchResult {
   syncedSessionsCount?: number;
   syncedAnswersCount?: number;
   error?: string;
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number = 4000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error('Network operation timed out')), ms)
+    ),
+  ]);
 }
 
 export class SyncService {
@@ -39,6 +48,7 @@ export class SyncService {
    */
   public triggerSync(): void {
     if (typeof window === 'undefined') return;
+    if (!canUseNetwork()) return;
     this.syncBatch().catch((err) => {
       console.warn('Background sync warning:', err);
     });
@@ -48,6 +58,10 @@ export class SyncService {
    * Синхронизация пачки телеметрии с Supabase RPC
    */
   public async syncBatch(): Promise<SyncBatchResult> {
+    if (!canUseNetwork()) {
+      return { status: 'skipped', reason: 'offline' };
+    }
+
     if (this.isSyncing) {
       return { status: 'skipped', reason: 'already_syncing' };
     }
@@ -112,10 +126,13 @@ export class SyncService {
         answers: answersPayload,
       };
 
-      // 4. Отправляем в RPC `sync_telemetry_batch`
-      const { data, error } = await client.rpc('sync_telemetry_batch', {
-        p_payload: payload,
-      });
+      // 4. Отправляем в RPC `sync_telemetry_batch` с таймаутом 4с
+      const rpcPromise = Promise.resolve(
+        client.rpc('sync_telemetry_batch', {
+          p_payload: payload,
+        })
+      ) as Promise<{ data: any; error: any }>;
+      const { data, error } = await withTimeout(rpcPromise, 4000);
 
       if (error) {
         // Ошибка сети или отклонение RPC сервером: сохраняем элементы в очереди для повтора
